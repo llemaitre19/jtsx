@@ -1,0 +1,30 @@
+name: CI
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{matrix.emacs_version == 'snapshot'}}
+
+    strategy:
+      matrix:
+        emacs_version: ['29.1', 'snapshot']
+
+    steps:
+    - name: Install Emacs
+      uses: purcell/setup-emacs@master
+      with:
+        version: ${{matrix.emacs_version}}
+
+    - name: Check out the source code
+      uses: actions/checkout@v4
+
+    - name: Install treesit javascript language
+      run: emacs --batch -l jtsx.el --eval "(jtsx-install-treesit-language 'javascript)"
+
+    - name: Install treesit Typescript language
+      run: emacs --batch -l jtsx.el --eval "(jtsx-install-treesit-language 'tsx)"
+
+    - name: Test the project
+      run: emacs --batch -l ert -l jtsx.el -l tests/jtsx-tests.el -f ert-run-tests-batch-and-exit
