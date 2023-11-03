@@ -200,7 +200,7 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 
 ## FAQ
 
-### Jumping or refactoring functions sometimes failed, what is going wrong ?
+### Jumping or refactoring functions sometimes fail, what is going wrong ?
 
 An invalid `JSX` syntax in the buffer can be the source of the problem. `Tree-sitter` tries to be resilient regarding syntax validity, but sometimes the parser cannot (or is not smart enough to) guess what the errored code means exactly.
 
