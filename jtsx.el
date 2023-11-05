@@ -646,7 +646,8 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
 TS-LANG-KEY is the language to be installed."
   ;; Known bug : calling `treesit-install-language-grammar' multiple times for the same language
   ;; seems buggy.
-  ;; TODO: qualify the bug and report it if necessary
+  ;; Fixed by commit 1098c114b74 in emacs 30.0.50
+  ;; (bug https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66673)
   (interactive (list (intern (completing-read "Language: " '(javascript tsx)))))
   (unless (alist-get ts-lang-key treesit-language-source-alist)
     (let ((source (pcase ts-lang-key
