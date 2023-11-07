@@ -520,8 +520,8 @@ See `forward-sexp' documentation for informations about N argument."
                   (end-pos (treesit-node-end enclosing-node)))
         (goto-char end-pos))
     ;; Starting Emacs 30, treesit set its own function, which has some issues.
-    ;; Use the default one.
-    ;; TODO: qualify the bug and report it if necessary
+    ;; Bug report: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988
+    ;; Use the default one instead.
     (let ((forward-sexp-function nil))
       (forward-sexp n))))
 
