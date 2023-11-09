@@ -152,15 +152,20 @@ See `comment-dwim' documentation for ARG usage."
         (jtsx-comment-jsx-dwim arg))
     (comment-dwim arg)))
 
-(defun jtsx-enclosing-jsx-node (node types &optional fallback-types include-node)
+(defun jtsx-enclosing-jsx-node (node types &optional fallback-types include-node jsx-exp-guard)
   "Get first parent of NODE matching one of TYPES.
 If the research failed and FALLBACK-TYPES are not nil retry with FALLBACK-TYPES.
-If INCLUDE-NODE is not nil, NODE is included in the research."
-  (let ((enclosing-node (let ((pred (lambda (n) (member (treesit-node-type n) types))))
-                          (treesit-parent-until node pred include-node))))
+If INCLUDE-NODE is not nil, NODE is included in the research.
+If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
+  (let ((enclosing-node (if include-node node (treesit-node-parent node))))
+    (while (and enclosing-node (not (member (treesit-node-type enclosing-node) types)))
+      (setq enclosing-node (if (and jsx-exp-guard
+                                    (equal (treesit-node-type enclosing-node) "jsx_expression"))
+                               nil ;; give up the research
+                             (treesit-node-parent enclosing-node))))
     (if (or enclosing-node (not fallback-types))
         enclosing-node
-      (jtsx-enclosing-jsx-node node fallback-types nil include-node))))
+      (jtsx-enclosing-jsx-node node fallback-types nil include-node jsx-exp-guard))))
 
 (defun jtsx-enclosing-jsx-element (node)
   "Get first parent of NODE matching `jsx_element' type."
@@ -304,9 +309,14 @@ Return a plist containing the move information : `:node-start', `:node-end',
                                                  (pos-eol))
                                                 jtsx-jsx-ts-element-tag-keys
                                                 jtsx-jsx-ts-root-keys
-                                                t))
+                                                t
+                                                t)) ;; Do not traverse jsx expression
          (current-node-type (treesit-node-type current-node))
-         (enclosing-node (jtsx-enclosing-jsx-node current-node jtsx-jsx-ts-root-keys nil t))
+         (enclosing-node (jtsx-enclosing-jsx-node current-node
+                                                  jtsx-jsx-ts-root-keys
+                                                  nil
+                                                  t
+                                                  t)) ;; Do not traverse jsx expression
          (moving-opening-or-closing-tag (and (not full-element-move)
                                              (member current-node-type
                                                      jtsx-jsx-ts-element-tag-keys)))
@@ -345,7 +355,8 @@ Return a plist containing the move information : `:node-start', `:node-end',
                  ;; Try to step out
                  ((and (not node-candidate) jtsx-jsx-element-move-allow-step-out)
                   (let* ((parent-node
-                          (jtsx-enclosing-jsx-node enclosing-node jtsx-jsx-ts-root-keys))
+                          ;; Step out target can only be a JSX element
+                          (jtsx-enclosing-jsx-node enclosing-node '("jsx_element") nil nil t))
                          (grand-parent-node (treesit-node-parent parent-node)))
                     ;; Ensure not to go out of JSX context
                     (when (jtsx-node-in-jsx-context grand-parent-node)
@@ -393,7 +404,7 @@ used if FULL-ELEMENT-MOVE is t."
             (indent-region (save-excursion (when (not backward) (jtsx-goto-line prev-line))
                                            (pos-bol))
                            (save-excursion (when backward (jtsx-goto-line prev-line))
-                                           (forward-line (- lines-count 1))(pos-eol))))
+                                           (forward-line (- lines-count 1)) (pos-eol))))
         (message "No move in this direction."))
     (message "Not inside jsx context.")))
 

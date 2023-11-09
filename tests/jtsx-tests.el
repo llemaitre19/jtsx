@@ -503,6 +503,24 @@ Turn this buffer in MODE mode if supplied or defaults to tsx-mode."
     (should (equal (move-backward-jsx-element-end-into-buffer content move-point #'tsx-mode)
                    result))))
 
+(ert-deftest jtsx-test-move-jsx-opening-element-forward-from-attribute-exp-failed () ;; Bug fix
+  (let ((move-point #'(lambda () (goto-char 0) (forward-line 2)))
+        (content "(\n  <A attr={(\n    <C></C>\n  )}>\n    <B />\n  </A>\n);")
+        (result "(\n  <A attr={(\n    <C></C>\n  )}>\n    <B />\n  </A>\n);"))
+    (should (equal (move-forward-jsx-element-end-into-buffer content move-point #'jsx-mode)
+                   result))
+    (should (equal (move-forward-jsx-element-end-into-buffer content move-point #'tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-move-jsx-opening-element-backward-from-attribute-exp-failed () ;; Bug fix
+  (let ((move-point #'(lambda () (goto-char 0) (forward-line 2)))
+        (content "(\n  <A attr={(\n    <C></C>\n  )}>\n    <B />\n  </A>\n);")
+        (result "(\n  <A attr={(\n    <C></C>\n  )}>\n    <B />\n  </A>\n);"))
+    (should (equal (move-backward-jsx-element-end-into-buffer content move-point #'jsx-mode)
+                   result))
+    (should (equal (move-backward-jsx-element-end-into-buffer content move-point #'tsx-mode)
+                   result))))
+
 ;; TEST MOVE JSX FULL ELEMENT
 (ert-deftest jtsx-test-move-jsx-element-forward-from-opening ()
   (let ((move-point #'(lambda () (goto-char 0) (forward-line 2)))
@@ -683,6 +701,22 @@ Turn this buffer in MODE mode if supplied or defaults to tsx-mode."
          "(\n  <>\n    <A>\n      <B>\n      </B>\n      <C>\n      </C>\n    </A>\n  </>\n);")
         (result
          "(\n  <>\n    <A>\n      <B>\n      </B>\n      <C>\n      </C>\n    </A>\n  </>\n);"))
+    (should (equal (move-backward-jsx-element-into-buffer content move-point #'jsx-mode) result))
+    (should (equal (move-backward-jsx-element-into-buffer content move-point #'tsx-mode) result))))
+
+(ert-deftest jtsx-test-move-jsx-element-step-out-forward-from-jsx-expression-failed ()
+  (let ((jtsx-jsx-element-move-allow-step-out t)
+        (move-point #'(lambda () (goto-char 0) (forward-line 3)))
+        (content "(\n  <>\n    {(\n      <A />\n    )}\n  </>\n);")
+        (result "(\n  <>\n    {(\n      <A />\n    )}\n  </>\n);"))
+    (should (equal (move-forward-jsx-element-into-buffer content move-point #'jsx-mode) result))
+    (should (equal (move-forward-jsx-element-into-buffer content move-point #'tsx-mode) result))))
+
+(ert-deftest jtsx-test-move-jsx-element-step-out-backward-from-jsx-expression-failed ()
+  (let ((jtsx-jsx-element-move-allow-step-out t)
+        (move-point #'(lambda () (goto-char 0) (forward-line 3)))
+        (content "(\n  <>\n    {(\n      <A />\n    )}\n  </>\n);")
+        (result "(\n  <>\n    {(\n      <A />\n    )}\n  </>\n);"))
     (should (equal (move-backward-jsx-element-into-buffer content move-point #'jsx-mode) result))
     (should (equal (move-backward-jsx-element-into-buffer content move-point #'tsx-mode) result))))
 
