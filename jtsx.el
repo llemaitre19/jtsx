@@ -623,7 +623,7 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
 ;;;###autoload
 (define-derived-mode jsx-mode js-ts-mode "JSX"
   "Major mode extending `js-ts-mode'."
-  :group 'jsx-mode
+  :group 'jtsx
   (let ((ts-lang-key 'javascript))
     (when (treesit-ready-p ts-lang-key)
       (jtsx-prioritize-mode-if-present 'jsx-mode) ;; js-ts-mode mode sets auto-mode-alist when loaded
@@ -642,7 +642,7 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
 ;;;###autoload
 (define-derived-mode tsx-mode tsx-ts-mode "TSX"
   "Major mode extending `tsx-ts-mode'."
-  :group 'tsx-mode
+  :group 'jtsx
   (let ((ts-lang-key 'tsx))
     (when (treesit-ready-p ts-lang-key)
       (setq-local jtsx-ts-indent-rules (typescript-ts-mode--indent-rules 'tsx))
