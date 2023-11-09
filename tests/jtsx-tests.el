@@ -6,7 +6,8 @@
 ;; Maintainer: Loïc Lemaître <loic.lemaitre@gmail.com
 
 ;;; Commentary:
-;; TODO
+;; Tests suite for jtsx package.
+;; It uses ERT testing tool.
 
 ;;; Code:
 
