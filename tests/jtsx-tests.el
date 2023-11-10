@@ -906,9 +906,9 @@ Turn this buffer in MODE mode if supplied or defaults to tsx-mode."
     (should (equal (hs-forward-sexp-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-hs-forward-sexp-brace ()
-  (let ((move-point #'(lambda () (goto-char 2)))
-        (content "({true});")
-        (result 8))
+  (let ((move-point #'(lambda () (goto-char 4)))
+        (content "(<>{true}</>);")
+        (result 10))
     (should (equal (hs-forward-sexp-into-buffer content move-point #'jsx-mode) result))
     (should (equal (hs-forward-sexp-into-buffer content move-point #'tsx-mode) result))))
 
