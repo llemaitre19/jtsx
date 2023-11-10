@@ -538,11 +538,11 @@ See `forward-sexp' documentation for informations about N argument."
 
 (defun jtsx-hs-find-block-beginning ()
   "Enhance `hs-find-block-beginning' for JSX."
-  (if (and (jtsx-jsx-context-p))
-      (when-let* ((node (treesit-node-at (point)))
-                  (enclosing-node (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                  (start-pos (treesit-node-start enclosing-node)))
-        (goto-char start-pos))
+  (unless (and (jtsx-jsx-context-p)
+               (when-let* ((node (treesit-node-at (point)))
+                           (enclosing-node (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
+                           (start-pos (treesit-node-start enclosing-node)))
+                 (goto-char start-pos)))
     (hs-find-block-beginning)))
 
 (defmacro jtsx-ts-indent-rules-for-key (ts-lang-key)
