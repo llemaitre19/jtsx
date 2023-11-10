@@ -525,11 +525,11 @@ ELEMENT-NAME is the name of the new wrapping element."
   "Make `forward-sexp' compatible with Hideshow in JSX.
 See `forward-sexp' documentation for informations about N argument."
   (interactive "p")
-  (if (and (jtsx-jsx-context-p))
-      (when-let* ((node (treesit-node-at (point)))
-                  (enclosing-node (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                  (end-pos (treesit-node-end enclosing-node)))
-        (goto-char end-pos))
+  (unless (and (jtsx-jsx-context-p)
+               (when-let* ((node (treesit-node-at (point)))
+                           (enclosing-node (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
+                           (end-pos (treesit-node-end enclosing-node)))
+                 (goto-char end-pos)))
     ;; Starting Emacs 30, treesit set its own function, which has some issues.
     ;; Bug report: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988
     ;; Use the default one instead.
