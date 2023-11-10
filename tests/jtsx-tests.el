@@ -955,9 +955,9 @@ Turn this buffer in MODE mode if supplied or defaults to tsx-mode."
     (should (equal (hs-find-block-beginning-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-hs-find-expression-beginning ()
-  (let ((move-point #'(lambda () (goto-char 7)))
-        (content "({true});")
-        (result 2))
+  (let ((move-point #'(lambda () (goto-char 9)))
+        (content "(<>{true}</>);")
+        (result 4))
     (should (equal (hs-find-block-beginning-into-buffer content move-point #'jsx-mode) result))
     (should (equal (hs-find-block-beginning-into-buffer content move-point #'tsx-mode) result))))
 
