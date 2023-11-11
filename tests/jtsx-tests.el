@@ -281,72 +281,72 @@ Turn this buffer in MODE mode if supplied or defaults to tsx-mode."
 
 ;; TEST JUMPS
 (ert-deftest jtsx-test-jump-opening-element-starting-from-closing ()
-  (let ((move-point (lambda () (goto-char 6))) ;; inside "</A>"
+  (let ((move-point (lambda () (goto-char 6))) ; inside "</A>"
         (content "(<A></A>);")
-        (result 3)) ;; right after first "<"
+        (result 3)) ; right after first "<"
     (should (equal (jump-jsx-opening-element-into-buffer content move-point #'jsx-mode) result))
     (should (equal (jump-jsx-opening-element-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-jump-opening-element-starting-from-children ()
-  (let ((move-point (lambda () (goto-char 5))) ;; A children
+  (let ((move-point (lambda () (goto-char 5))) ; A children
         (content "(<A></A>);")
-        (result 3)) ;; right after first "<"
+        (result 3)) ; right after first "<"
     (should (equal (jump-jsx-opening-element-into-buffer content move-point #'jsx-mode) result))
     (should (equal (jump-jsx-opening-element-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-jump-opening-element-nested-context ()
-  (let ((move-point (lambda () (goto-char 13))) ;; in last "</A>"
+  (let ((move-point (lambda () (goto-char 13))) ; in last "</A>"
         (content "(<A><A></A></A>);")
-        (result 3)) ;; right after first "<"
+        (result 3)) ; right after first "<"
     (should (equal (jump-jsx-opening-element-into-buffer content move-point #'jsx-mode) result))
     (should (equal (jump-jsx-opening-element-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-jump-closing-element-starting-from-opening ()
-  (let ((move-point (lambda () (goto-char 6))) ;; inside "</A>"
+  (let ((move-point (lambda () (goto-char 6))) ; inside "</A>"
         (content "(<A></A>);")
-        (result 8)) ;; right before last ">"
+        (result 8)) ; right before last ">"
     (should (equal (jump-jsx-closing-element-into-buffer content move-point #'jsx-mode) result))
     (should (equal (jump-jsx-closing-element-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-jump-closing-element-starting-from-children ()
-  (let ((move-point (lambda () (goto-char 5))) ;; A children
+  (let ((move-point (lambda () (goto-char 5))) ; A children
         (content "(<A></A>);")
-        (result 8)) ;; right before last ">"
+        (result 8)) ; right before last ">"
     (should (equal (jump-jsx-closing-element-into-buffer content move-point #'jsx-mode) result))
     (should (equal (jump-jsx-closing-element-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-jump-closing-element-nested-context ()
-  (let ((move-point (lambda () (goto-char 3))) ;; in the first "<A>"
+  (let ((move-point (lambda () (goto-char 3))) ; in the first "<A>"
         (content "(<A><A></A></A>);")
-        (result 15)) ;; right before last ">"
+        (result 15)) ; right before last ">"
     (should (equal (jump-jsx-closing-element-into-buffer content move-point #'jsx-mode) result))
     (should (equal (jump-jsx-closing-element-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-jump-element-dwim-from-opening ()
-  (let ((move-point (lambda () (goto-char 3))) ;; inside "<A>"
+  (let ((move-point (lambda () (goto-char 3))) ; inside "<A>"
         (content "(<A></A>);")
-        (result 8)) ;; right before last ">"
+        (result 8)) ; right before last ">"
     (should (equal (jump-jsx-element-dwim-into-buffer content move-point #'jsx-mode) result))
     (should (equal (jump-jsx-element-dwim-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-jump-element-dwim-from-closing ()
-  (let ((move-point (lambda () (goto-char 7))) ;; inside "</A>"
+  (let ((move-point (lambda () (goto-char 7))) ; inside "</A>"
         (content "(<A></A>);")
-        (result 3)) ;; right after first "<"
+        (result 3)) ; right after first "<"
     (should (equal (jump-jsx-element-dwim-into-buffer content move-point #'jsx-mode) result))
     (should (equal (jump-jsx-element-dwim-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-jump-element-dwim-from-children-1 ()
-  (let ((move-point (lambda () (goto-char 6))) ;; inside "XX"
+  (let ((move-point (lambda () (goto-char 6))) ; inside "XX"
         (content "(<A>XXYY</A>);")
-        (result 12)) ;; right before last ">"
+        (result 12)) ; right before last ">"
     (should (equal (jump-jsx-element-dwim-into-buffer content move-point #'jsx-mode) result))
     (should (equal (jump-jsx-element-dwim-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-jump-element-dwim-from-children-2 ()
-  (let ((move-point (lambda () (goto-char 8))) ;; inside "YY"
+  (let ((move-point (lambda () (goto-char 8))) ; inside "YY"
         (content "(<A>XXYY</A>);")
-        (result 3)) ;; right after first "<"
+        (result 3)) ; right after first "<"
     (should (equal (jump-jsx-element-dwim-into-buffer content move-point #'jsx-mode) result))
     (should (equal (jump-jsx-element-dwim-into-buffer content move-point #'tsx-mode) result))))
 
@@ -504,7 +504,7 @@ Turn this buffer in MODE mode if supplied or defaults to tsx-mode."
     (should (equal (move-backward-jsx-element-end-into-buffer content move-point #'tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-move-jsx-opening-element-forward-from-attribute-exp-failed () ;; Bug fix
+(ert-deftest jtsx-test-move-jsx-opening-element-forward-from-attribute-exp-failed () ; Bug fix
   (let ((move-point #'(lambda () (goto-char 0) (forward-line 2)))
         (content "(\n  <A attr={(\n    <C></C>\n  )}>\n    <B />\n  </A>\n);")
         (result "(\n  <A attr={(\n    <C></C>\n  )}>\n    <B />\n  </A>\n);"))
@@ -513,7 +513,7 @@ Turn this buffer in MODE mode if supplied or defaults to tsx-mode."
     (should (equal (move-forward-jsx-element-end-into-buffer content move-point #'tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-move-jsx-opening-element-backward-from-attribute-exp-failed () ;; Bug fix
+(ert-deftest jtsx-test-move-jsx-opening-element-backward-from-attribute-exp-failed () ; Bug fix
   (let ((move-point #'(lambda () (goto-char 0) (forward-line 2)))
         (content "(\n  <A attr={(\n    <C></C>\n  )}>\n    <B />\n  </A>\n);")
         (result "(\n  <A attr={(\n    <C></C>\n  )}>\n    <B />\n  </A>\n);"))
