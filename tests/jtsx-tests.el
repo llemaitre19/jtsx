@@ -962,9 +962,9 @@ Turn this buffer in MODE mode if supplied or defaults to tsx-mode."
     (should (equal (hs-find-block-beginning-into-buffer content move-point #'tsx-mode) result))))
 
 (ert-deftest jtsx-test-hs-find-expression-with-nested-element ()
-  (let ((move-point #'(lambda () (goto-char 12)))
-        (content "({(<A></A>)});")
-        (result 2))
+  (let ((move-point #'(lambda () (goto-char 14)))
+        (content "(<>{(<A></A>)}</>);")
+        (result 4))
     (should (equal (hs-find-block-beginning-into-buffer content move-point #'jsx-mode) result))
     (should (equal (hs-find-block-beginning-into-buffer content move-point #'tsx-mode) result))))
 
