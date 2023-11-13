@@ -6,7 +6,7 @@
 ;; Maintainer: Loïc Lemaître <loic.lemaitre@gmail.com>
 ;; URL: https://github.com/llemaitre19/jtsx
 ;; Package-Requires: ((emacs "29.1"))
-;; Version: 0.1.0
+;; Version: 0.2.0
 ;; Keywords: languages
 ;; License: GNU General Public License 3
 
