@@ -31,8 +31,9 @@
 
 (eval-and-compile
   ;; HACK
-  ;; Prevent language warnings when loading `typescript-ts-mode`.
-  ;; Temporary advices `treesit-ready-p' function to make it quiet.
+  ;; Prevent language warnings when loading `typescript-ts-mode` (when Tree-sitter
+  ;; typescript and tsx languages are not installed yet).
+  ;; Temporary advice `treesit-ready-p' function to make it quiet.
   (defun jtsx-treesit-ready-p (orig-func &rest args)
     "Advice ORIG-FUNC to make it quiet.
 First element of ARGS and t are the new arguments."
