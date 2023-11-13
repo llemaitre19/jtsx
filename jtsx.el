@@ -29,15 +29,18 @@
 (require 'newcomment)
 (require 'hideshow)
 
-(defun jtsx-treesit-ready-p (orig-func &rest args)
-  "Advice ORIG-FUNC to make it quiet.
+(eval-and-compile
+  ;; HACK
+  ;; Prevent language warnings when loading `typescript-ts-mode`.
+  ;; Temporary advices `treesit-ready-p' function to make it quiet.
+  (defun jtsx-treesit-ready-p (orig-func &rest args)
+    "Advice ORIG-FUNC to make it quiet.
 First element of ARGS and t are the new arguments."
   (apply orig-func (list (car args) t)))
 
-;; Prevent language warning when loading `typescript-ts-mode`.
-(advice-add 'treesit-ready-p :around #'jtsx-treesit-ready-p)
-(require 'typescript-ts-mode)
-(advice-remove 'treesit-ready-p #'jtsx-treesit-ready-p)
+  (advice-add 'treesit-ready-p :around #'jtsx-treesit-ready-p)
+  (require 'typescript-ts-mode)
+  (advice-remove 'treesit-ready-p #'jtsx-treesit-ready-p))
 
 (defgroup jtsx nil
   "Extends default treesit support for JSX/TSX."
