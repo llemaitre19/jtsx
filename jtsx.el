@@ -75,6 +75,14 @@ continuated expression."
   :safe 'booleanp
   :group 'jtsx)
 
+(defcustom jtsx-enable-all-syntax-highlighting-features t
+  "Enable all available syntax highlighting features.
+If nil, default level defined by the underlying major mode is used.
+See `treesit-font-lock-level' for more informations."
+  :type 'boolean
+  :safe 'booleanp
+  :group 'jtsx)
+
 (defconst jtsx-jsx-ts-root-keys '("jsx_element"
                                   "jsx_self_closing_element"
                                   "jsx_expression"
@@ -605,6 +613,12 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
     (jtsx-ts-remove-indent-rule ts-lang-key
                                 `((node-is "statement_block") parent-bol ,indent-var-name)))
   (setq-local treesit-simple-indent-rules jtsx-ts-indent-rules)
+
+  ;; Use maximum level of syntax highlighting if enabled
+  (when jtsx-enable-all-syntax-highlighting-features
+    (setq-local treesit-font-lock-level 4))
+
+  ;; Apply treesit customization
   (treesit-major-mode-setup))
 
 (defun jtsx-prioritize-mode-if-present (mode)

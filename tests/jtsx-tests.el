@@ -31,8 +31,8 @@ Turn this buffer in MODE mode if supplied or defaults to tsx-mode."
       (transient-mark-mode)
       (insert initial-content)
       (goto-char 0)
-      (funcall customize)
-      (funcall command)
+      (when customize (funcall customize))
+      (when command (funcall command))
       (funcall return))))
 
 (defun do-command-into-buffer-ret-position (initial-content
@@ -967,5 +967,21 @@ Turn this buffer in MODE mode if supplied or defaults to tsx-mode."
         (result 4))
     (should (equal (hs-find-block-beginning-into-buffer content move-point #'jsx-mode) result))
     (should (equal (hs-find-block-beginning-into-buffer content move-point #'tsx-mode) result))))
+
+;; TEST JTSX-ENABLE-ALL-SYNTAX-HIGHLIGHTING-FEATURES OPTION T
+(ert-deftest jtsx-test-enable-all-syntax-highlighting-features-option-t ()
+  (let ((jtsx-enable-all-syntax-highlighting-features t)
+        (return-func (lambda () treesit-font-lock-level))
+        (result 4))
+    (should (equal (do-command-into-buffer "" nil nil return-func #'jsx-mode) result))
+    (should (equal (do-command-into-buffer "" nil nil return-func #'tsx-mode) result))))
+
+;; TEST JTSX-ENABLE-ALL-SYNTAX-HIGHLIGHTING-FEATURES OPTION NIL
+(ert-deftest jtsx-test-enable-all-syntax-highlighting-features-option-nil ()
+  (let ((jtsx-enable-all-syntax-highlighting-features nil)
+        (return-func (lambda () treesit-font-lock-level))
+        (result treesit-font-lock-level))
+    (should (equal (do-command-into-buffer "" nil nil return-func #'jsx-mode) result))
+    (should (equal (do-command-into-buffer "" nil nil return-func #'tsx-mode) result))))
 
 ;;; jtsx-tests.el ends here
