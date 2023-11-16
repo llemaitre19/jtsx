@@ -82,6 +82,7 @@ Here an example of configuration using `use-package`, to put in the `Emacs` `ini
   (jtsx-indent-statement-block-regarding-standalone-parent nil)
   (jtsx-jsx-element-move-allow-step-out t)
   (jtsx-enable-jsx-electric-closing-element t)
+  (jtsx-enable-all-syntax-highlighting-features t)
   :config
   (defun jtsx-bind-keys-to-mode-map (mode-map)
     "Bind keys to MODE-MAP."
