@@ -6,14 +6,30 @@
 ;; Maintainer: Loïc Lemaître <loic.lemaitre@gmail.com>
 ;; URL: https://github.com/llemaitre19/jtsx
 ;; Package-Requires: ((emacs "29.1"))
-;; Version: 0.2.0
+;; Version: 0.2.1
 ;; Keywords: languages
-;; License: GNU General Public License 3
+
+;; This file is NOT part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
-;; jtsx is a package for editing JSX or TSX files.  It provides jsx-mode and
-;; tsx-mode major modes implemented respectively on top of js-ts-mode and
-;; tsx-ts-mode, benefiting thus from the new tree-sitter built-in feature.
+;; jtsx is a package for editing JSX or TSX files.  It provides jtsx-jsx-mode
+;; and jtsx-tsx-mode major modes implemented respectively on top of js-ts-mode
+;; and tsx-ts-mode, benefiting thus from the new tree-sitter built-in feature.
 
 ;; Summary of features and fixes:
 ;; * Fix commenting and indenting issues with JSX code in Emacs built-in
@@ -638,13 +654,33 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
     (setf (cdr (assoc key copy)) (mapcar (lambda (rule) rule) (cdr (assoc key copy))))
     (cl-copy-list copy)))
 
+(defun jtsx-define-obsolete-mode-variable-alias (obsolete-mode current-mode when var-suffix)
+  "Create an alias for a variable of CURRENT-MODE and mark it obsolete.
+The alias name format is :  [OBSOLETE-MODE]-[var-suffix].
+WHEN indicates when the variable starts to be obsolete."
+  (let ((append-to-symb (lambda (symb suffix) (intern (concat (symbol-name symb) "-" suffix)))))
+    (define-obsolete-variable-alias
+      (funcall append-to-symb obsolete-mode var-suffix)
+      (funcall append-to-symb current-mode var-suffix)
+      when)))
+
+(defun jtsx-define-obsolete-mode-alias (obsolete-mode current-mode when)
+  "Create OBSOLETE-MODE as an alias to CURRENT-MODE and mark it obsolete.
+WHEN indicates when the mode starts to be obsolete."
+  (define-obsolete-function-alias obsolete-mode current-mode when)
+  (jtsx-define-obsolete-mode-variable-alias obsolete-mode current-mode when "map")
+  (jtsx-define-obsolete-mode-variable-alias obsolete-mode current-mode when "hook")
+  (jtsx-define-obsolete-mode-variable-alias obsolete-mode current-mode when "syntax-table")
+  (jtsx-define-obsolete-mode-variable-alias obsolete-mode current-mode when "abbrev-table"))
+
 ;;;###autoload
-(define-derived-mode jsx-mode js-ts-mode "JSX"
+(define-derived-mode jtsx-jsx-mode js-ts-mode "JSX"
   "Major mode extending `js-ts-mode'."
   :group 'jtsx
   (let ((ts-lang-key 'javascript))
     (when (treesit-ready-p ts-lang-key)
-      (jtsx-prioritize-mode-if-present 'jsx-mode) ; js-ts-mode mode sets auto-mode-alist when loaded
+      ;; js-ts-mode mode sets auto-mode-alist when loaded
+      (jtsx-prioritize-mode-if-present 'jtsx-jsx-mode)
       ;; Do a deep copy of javascript indent rules variable, to prevent side effects as we will
       ;; modify it.
       (setq-local jtsx-ts-indent-rules
@@ -655,19 +691,26 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
         (jtsx-ts-remove-indent-rule ts-lang-key '(js-jsx--treesit-indent-compatibility-bb1f97b))
         (mapc (lambda (rule) (jtsx-ts-add-indent-rule 'javascript rule))
               (js-jsx--treesit-indent-compatibility-bb1f97b)))
-      (jtsx-configure-mode-base 'jsx-mode jsx-mode-map ts-lang-key 'js-indent-level))))
+      (jtsx-configure-mode-base 'jtsx-jsx-mode jtsx-jsx-mode-map ts-lang-key 'js-indent-level))))
+
+;; Keep old jsx-mode for backward compatibility but mark it as obsolete.
+(jtsx-define-obsolete-mode-alias 'jsx-mode 'jtsx-jsx-mode "jtsx 0.2.1")
 
 ;;;###autoload
-(define-derived-mode tsx-mode tsx-ts-mode "TSX"
+(define-derived-mode jtsx-tsx-mode tsx-ts-mode "TSX"
   "Major mode extending `tsx-ts-mode'."
   :group 'jtsx
   (let ((ts-lang-key 'tsx))
     (when (treesit-ready-p ts-lang-key)
       (setq-local jtsx-ts-indent-rules (typescript-ts-mode--indent-rules 'tsx))
-      (jtsx-configure-mode-base 'tsx-mode tsx-mode-map 'tsx 'typescript-ts-mode-indent-offset))))
+      (jtsx-configure-mode-base 'jtsx-tsx-mode jtsx-tsx-mode-map 'tsx
+                                'typescript-ts-mode-indent-offset))))
+
+;; Keep old tsx-mode for backward compatibility but mark it as obsolete.
+(jtsx-define-obsolete-mode-alias 'tsx-mode 'jtsx-tsx-mode "jtsx 0.2.1")
 
 ;; typescript-ts-mode package sets auto-mode-alist when loaded
-(jtsx-prioritize-mode-if-present 'tsx-mode)
+(jtsx-prioritize-mode-if-present 'jtsx-tsx-mode)
 
 ;;;###autoload
 (defun jtsx-install-treesit-language (ts-lang-key)
