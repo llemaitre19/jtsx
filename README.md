@@ -4,7 +4,7 @@
 
 ## Extends Emacs JSX/TSX built-in support
 
-`jtsx` is an Emacs package for editing `JSX` or `TSX` files. It provides `jsx-mode` and `tsx-mode` major modes implemented respectively on top of `js-ts-mode` and `tsx-ts-mode`, benefiting thus from the new built-in [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) feature.
+`jtsx` is an Emacs package for editing `JSX` or `TSX` files. It provides `jtsx-jsx-mode` and `jtsx-tsx-mode` major modes implemented respectively on top of `js-ts-mode` and `tsx-ts-mode`, benefiting thus from the new built-in [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) feature.
 
 Summary of features and fixes:
 
@@ -14,7 +14,7 @@ Summary of features and fixes:
 * Electric `JSX` closing tag
 * Code folding
 
-Note that `jsx-mode` and `tsx-mode` work as well respectively for standart `JS` and `TS` files.
+Note that `jtsx-jsx-mode` and `jtsx-tsx-mode` work as well respectively for standart `JS` and `TS` files.
 
 ## Requirements
 
@@ -53,7 +53,7 @@ Another alternative is to use [straight.el](https://github.com/radian-software/s
 
 ### `tree-sitter` languages installation
 
-Installing `tree-sitter` languages is required by `jtsx` (`javascript` for `jsx-mode` `tsx` for `tsx-mode`). You can use `M-x jtsx-install-treesit-language` command which is a convenient wrapper around `treesit-install-language-grammar` for that purpose.
+Installing `tree-sitter` languages is required by `jtsx` (`javascript` for `jtsx-jsx-mode`, `tsx` for `jtsx-tsx-mode`). You can use `M-x jtsx-install-treesit-language` command which is a convenient wrapper around `treesit-install-language-grammar` for that purpose.
 
 For more advanced usages, see `M-x treesit-install-language-grammar` command, or manually compile and set up language libraries.
 
@@ -61,20 +61,20 @@ For more advanced usages, see `M-x treesit-install-language-grammar` command, or
 
 Here an example of configuration using `use-package`, to put in the `Emacs` `init.el`:
 
-* attach `jsx-mode` to `JSX` and `JS` files
-* attach `tsx-mode` to `TSX` and `TS` files
-* bind `jtsx` functions to the same shortcuts for `jsx-mode` and `tsx-mode`
+* attach `jtsx-jsx-mode` to `JSX` and `JS` files
+* attach `jtsx-tsx-mode` to `TSX` and `TS` files
+* bind `jtsx` functions to the same shortcuts for `jtsx-jsx-mode` and `jtsx-tsx-mode`
 * set indention offsets for `JSX` and `TSX` modes (use base mode variables)
 * customize `jtsx` behaviour through provided variables
 * enable `hideshow` minor mode for code folding
 
 ``` elisp
 (use-package jtsx
-  :mode (("\\.jsx?\\'" . jsx-mode)
-         ("\\.tsx?\\'" . tsx-mode))
+  :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
+         ("\\.tsx?\\'" . jtsx-tsx-mode))
   :commands jtsx-install-treesit-language
-  :hook ((jsx-mode . hs-minor-mode)
-         (tsx-mode . hs-minor-mode))
+  :hook ((jtsx-jsx-mode . hs-minor-mode)
+         (jtsx-tsx-mode . hs-minor-mode))
   :custom
   (js-indent-level 2)
   (typescript-ts-mode-indent-offset 2)
@@ -97,14 +97,14 @@ Here an example of configuration using `use-package`, to put in the `Emacs` `ini
     (define-key mode-map (kbd "C-c C-S-<up>") 'jtsx-move-jsx-element-step-in-backward)
     (define-key mode-map (kbd "C-c j w") 'jtsx-wrap-in-jsx-element))
     
-  (defun jtsx-bind-keys-to-jsx-mode-map ()
-      (jtsx-bind-keys-to-mode-map jsx-mode-map))
+  (defun jtsx-bind-keys-to-jtsx-jsx-mode-map ()
+      (jtsx-bind-keys-to-mode-map jtsx-jsx-mode-map))
 
-  (defun jtsx-bind-keys-to-tsx-mode-map ()
-      (jtsx-bind-keys-to-mode-map tsx-mode-map))
+  (defun jtsx-bind-keys-to-jtsx-tsx-mode-map ()
+      (jtsx-bind-keys-to-mode-map jtsx-tsx-mode-map))
 
-  (add-hook 'jsx-mode-hook 'jtsx-bind-keys-to-jsx-mode-map)
-  (add-hook 'tsx-mode-hook 'jtsx-bind-keys-to-tsx-mode-map))
+  (add-hook 'jtsx-jsx-mode-hook 'jtsx-bind-keys-to-jtsx-jsx-mode-map)
+  (add-hook 'jtsx-tsx-mode-hook 'jtsx-bind-keys-to-jtsx-tsx-mode-map))
 ```
 
 ## Features
@@ -160,7 +160,7 @@ This functionality can be desactivated by setting `jtsx-enable-jsx-electric-clos
 
 ### Code folding
 
-`jsx-mode` and `tsx-mode` customize built-in `Hideshow` package in order to support code folding into JSX parts.
+`jtsx-jsx-mode` and `jtsx-tsx-mode` customize built-in `Hideshow` package in order to support code folding into JSX parts.
 
 `Hideshow` can be enabled with `M-x hs-minor-mode` command.
 
@@ -174,8 +174,8 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 
 | Function                                 | Description                                                                                                                     |
 |------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| `jsx-mode`                               | Enable `jsx-mode`                                                                                                               |
-| `tsx-mode`                               | Enable `tsx-mode`                                                                                                               |
+| `jtsx-jsx-mode`                               | Enable `jtsx-jsx-mode`                                                                                                               |
+| `jtsx-tsx-mode`                               | Enable `jtsx-tsx-mode`                                                                                                               |
 | `jtsx-jump-jsx-element-tag-dwim`         | Jump either to the opening or to the closing tag of the JSX element.                                                            |
 | `jtsx-jump-jsx-opening-tag`              | Jump to the opening tag of the JSX element.                                                                                     |
 | `jtsx-jump-jsx-closing-tag`              | Jump to the closing tag of the JSX element.                                                                                     |
