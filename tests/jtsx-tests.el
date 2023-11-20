@@ -1063,15 +1063,15 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (let ((jtsx-enable-all-syntax-highlighting-features t)
         (return-func (lambda () treesit-font-lock-level))
         (result 4))
-    (should (equal (do-command-into-buffer "" nil nil return-func #'jsx-mode) result))
-    (should (equal (do-command-into-buffer "" nil nil return-func #'tsx-mode) result))))
+    (should (equal (do-command-into-buffer "" nil nil return-func #'jtsx-jsx-mode) result))
+    (should (equal (do-command-into-buffer "" nil nil return-func #'jtsx-tsx-mode) result))))
 
 ;; TEST JTSX-ENABLE-ALL-SYNTAX-HIGHLIGHTING-FEATURES OPTION NIL
 (ert-deftest jtsx-test-enable-all-syntax-highlighting-features-option-nil ()
   (let ((jtsx-enable-all-syntax-highlighting-features nil)
         (return-func (lambda () treesit-font-lock-level))
         (result treesit-font-lock-level))
-    (should (equal (do-command-into-buffer "" nil nil return-func #'jsx-mode) result))
-    (should (equal (do-command-into-buffer "" nil nil return-func #'tsx-mode) result))))
+    (should (equal (do-command-into-buffer "" nil nil return-func #'jtsx-jsx-mode) result))
+    (should (equal (do-command-into-buffer "" nil nil return-func #'jtsx-tsx-mode) result))))
 
 ;;; jtsx-tests.el ends here
