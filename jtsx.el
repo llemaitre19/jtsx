@@ -140,21 +140,19 @@ See `treesit-font-lock-level' for more informations."
 (defun jtsx-jsx-attribute-context-at-p (position)
   "Check if insinde a JSX element attribute at POSITION."
   (when-let ((node (treesit-node-at position)))
-    (jtsx-enclosing-jsx-node node '("jsx_attribute"))))
+    (jtsx-enclosing-jsx-node node '("jsx_attribute") nil nil t)))
 
 (defun jtsx-jsx-attribute-context-p ()
   "Check if in JSX element attribute context at point or at region ends."
   (let ((jsx-attr-at-point (jtsx-jsx-attribute-context-at-p (point))))
     (if (not (region-active-p))
         jsx-attr-at-point
-      (let ((jsx-attr-at-mark (jtsx-jsx-attribute-context-at-p (mark)))
-            (is-closing-tag (lambda (pos) (equal (treesit-node-type (treesit-node-at pos)) ">"))))
+      (let ((jsx-attr-at-mark (jtsx-jsx-attribute-context-at-p (mark))))
         (cond ((and jsx-attr-at-point jsx-attr-at-mark) t)
               ((and (not jsx-attr-at-point) (not jsx-attr-at-mark)) nil)
-              ;; Supports this case : <A attr> : if point or mark is between "r" and ">"
-              ;; it is not considered insite the attribute, but on the ">" node.
-              (jsx-attr-at-point (funcall is-closing-tag (mark)))
-              (jsx-attr-at-mark (funcall is-closing-tag (point))))))))
+              ;; Point and mark contexts mismatch : attribute context takes precedence as it should
+              ;; rather be the expected behaviour and the comment syntax is javascript compatible.
+              (t t))))))
 
 (defun jtsx-comment-jsx-dwim (arg)
   "Comment or uncomment JSX at point or in region.

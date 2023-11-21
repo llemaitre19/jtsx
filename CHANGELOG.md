@@ -2,6 +2,10 @@
 
 # Changelog
 
+## Master
+
+* Fix commenting jsx nested into a jsx element attribute.
+
 ## 0.3.0
 
 * Now available on Melpa.

@@ -215,6 +215,13 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
+(ert-deftest jtsx-test-comment-jsx-region-nested-in-attribute ()
+  (let ((set-region #'(lambda () (find-and-set-region "<B />")))
+        (content "(<A attr={<B />} />);")
+        (result "(<A attr={{/* <B /> */}} />);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
 (ert-deftest jtsx-test-comment-jsx-expression-region ()
   (let ((set-region #'(lambda () (find-and-set-region "{'test'}")))
         (content "(<A>{'test'}</A>);")
