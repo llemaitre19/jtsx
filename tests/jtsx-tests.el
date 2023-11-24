@@ -23,7 +23,8 @@
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
 Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (with-temp-buffer
-    (let ((indent-tabs-mode nil)
+    (let ((inhibit-message t)
+          (indent-tabs-mode nil)
           (js-indent-level indent-offset)
           (typescript-ts-mode-indent-offset indent-offset))
       (if mode (funcall mode) (jtsx-tsx-mode))
