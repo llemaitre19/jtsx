@@ -26,5 +26,19 @@ jobs:
     - name: Install treesit Typescript language
       run: emacs --batch -l jtsx.el --eval "(jtsx-install-treesit-language 'tsx)"
 
+    - name: Run package lint check
+      run: |
+        emacs --batch \
+          --eval "(progn \
+          (require 'package) \
+          (push '(\"melpa\" . \"https://melpa.org/packages/\") package-archives) \
+          (package-initialize) \
+          (unless package-archive-contents \
+          (package-refresh-contents)) \
+          (unless (package-installed-p 'package-lint) \
+          (package-install 'package-lint)))" \
+          --eval "(require 'package-lint)" \
+          -f package-lint-batch-and-exit jtsx.el
+
     - name: Test the project
       run: emacs --batch -l ert -l jtsx.el -l tests/jtsx-tests.el -f ert-run-tests-batch-and-exit
