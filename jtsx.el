@@ -521,7 +521,10 @@ ELEMENT-NAME is the name of the new wrapping element."
   (interactive "sJSX element name: ")
   (if (jtsx-jsx-context-p)
       (let* ((start-pos (if (region-active-p) (plist-get (jtsx-trimmed-region) :start) (point)))
-             (end-pos (if (region-active-p) (plist-get (jtsx-trimmed-region) :end) (point)))
+             ;; For the end position, it is safer to go back by one character as treesit looks at
+             ;; the node after the position (excepted when at the end of the line).
+             ;; This is usefull for inline elements.
+             (end-pos (if (region-active-p) (1- (plist-get (jtsx-trimmed-region) :end)) (point)))
              (element-start (jtsx-enclosing-jsx-node (treesit-node-at start-pos)
                                                      jtsx-jsx-ts-root-keys nil t t))
              (element-end (if (region-active-p)
@@ -529,22 +532,33 @@ ELEMENT-NAME is the name of the new wrapping element."
                                                        jtsx-jsx-ts-root-keys nil t t)
                             element-start)))
         (cl-assert (and element-start element-end) "Not able to retrieve node start or node end.")
-        (let ((opening-line (line-number-at-pos (treesit-node-start element-start)))
-              (closing-line (1+ (line-number-at-pos (treesit-node-end element-end)))) ; +1 for
-              ;; insertion
-              (opening-tag (format "<%s>\n" element-name))
-              (closing-tag (format "</%s>\n" element-name)))
+        (let* ((final-start-pos (treesit-node-start element-start))
+               (final-end-pos (treesit-node-end element-end))
+               ;; Opening tag is considered inline if something is before it on the same line.
+               ;; Same consideration for closing tag, but after it.
+               (inline-opening (not (eq final-start-pos (save-excursion (goto-char final-start-pos)
+                                                                        (back-to-indentation)
+                                                                        (point)))))
+               (inline-closing (not (eq final-end-pos (save-excursion (goto-char final-end-pos)
+                                                                      (pos-eol)))))
+               (opening-line (line-number-at-pos (treesit-node-start element-start)))
+               (closing-line (+ (line-number-at-pos (treesit-node-end element-end))
+                                (if inline-closing 0 1))) ; +1 for insertion if not inline
+               (opening-tag (format "<%s>%s" element-name (if inline-opening "" "\n")))
+               (closing-tag (format "</%s>%s" element-name (if inline-closing "" "\n"))))
           (save-excursion
-            (jtsx-goto-line closing-line)
+            (if inline-closing (goto-char final-end-pos) (jtsx-goto-line closing-line))
             (insert closing-tag)
-            (jtsx-goto-line opening-line)
+            (if inline-opening (goto-char final-start-pos) (jtsx-goto-line opening-line))
             (insert opening-tag))
-          (indent-region (save-excursion (jtsx-goto-line opening-line) (pos-bol))
-                         (save-excursion (jtsx-goto-line (1+ closing-line)) (pos-eol))) ; + 1
-          ;; because of the opening tag insertion
-          (jtsx-goto-line opening-line)
+          ;; Let the cursor ready to add attributes in the wrapping element
+          (goto-char final-start-pos)
           (search-forward ">")
-          (backward-char 1))) ; Let the cursor ready to add attributes
+          (backward-char 1)
+          ;; Finally indent modified region
+          (indent-region (save-excursion (jtsx-goto-line opening-line) (pos-bol))
+                         (save-excursion (jtsx-goto-line (+ closing-line (if inline-opening 0 1)))
+                                         (pos-eol)))))
     (message "Not inside jsx context.")))
 
 (defun jtsx-hs-forward-sexp (n)

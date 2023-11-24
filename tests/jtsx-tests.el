@@ -973,6 +973,20 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (wrap-in-jsx-element-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (wrap-in-jsx-element-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
+(ert-deftest jtsx-test-wrap-inline-element-at-point ()
+  (let ((move-point #'(lambda () (goto-char 4)))
+        (content "(<><A /></>);")
+        (result "(<><W><A /></W></>);"))
+    (should (equal (wrap-in-jsx-element-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (wrap-in-jsx-element-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-wrap-inline-element-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "<A />")))
+        (content "(<><A /></>);")
+        (result "(<><W><A /></W></>);"))
+    (should (equal (wrap-in-jsx-element-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (wrap-in-jsx-element-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
 ;; TEST HIDESHOW CUSTOMIZATION
 (ert-deftest jtsx-test-hs-forward-sexp-jsx-element ()
   (let ((move-point #'(lambda () (goto-char 2)))
