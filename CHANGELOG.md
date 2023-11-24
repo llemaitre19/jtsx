@@ -4,6 +4,8 @@
 
 ## Master
 
+* Wrapping an inline jsx element is now supported.
+* Fix wrapping jsx nested into a jsx element attribute.
 * Fix commenting jsx nested into a jsx element attribute.
 
 ## 0.3.0
