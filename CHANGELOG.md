@@ -4,6 +4,8 @@
 
 ## master
 
+* Wrapping an inline jsx element is now supported.
+* Fix wrapping jsx nested into a jsx element attribute.
 * Fix commenting jsx nested into a jsx element attribute.
 * Set maximum level of syntax highlighting provided by `js-ts-mode` and `tsx-ts-mode` by default. Can be disabled with `jtsx-enable-all-syntax-highlighting-features` custom variable.
 
