@@ -20,9 +20,9 @@ Note that `jtsx-jsx-mode` and `jtsx-tsx-mode` work as well respectively for stan
 
 Emacs 29.1 or higher, built with `tree-sitter` support (`./configure --with-tree-sitter`) is required. To check if your Emacs embeds `tree-sitter`, typing `M-x treesit` should give you at least `treesit-install-language-grammar` result.
 
-⚠️ `jtsx` do not work with the deprecated [tree-sitter](https://github.com/emacs-tree-sitter/elisp-tree-sitter) package.
+⚠️ _`jtsx` does not work with the deprecated [tree-sitter](https://github.com/emacs-tree-sitter/elisp-tree-sitter) package._
 
-⚠️ Even if Emacs is built with `tree-sitter` support, `tree-sitter` languages are not installed by default. `Git` and a `C/C++` compiler are necessary to install them.
+⚠️ _Even if Emacs is built with `tree-sitter` support, `tree-sitter` languages are not installed by default. `Git` and a `C/C++` compiler are necessary to install them._
 
 ## Getting started
 
@@ -158,6 +158,8 @@ When entering the `>` of an opening tag, the pending closing tag is automaticall
 ![Electricity](./examples/electricity.gif)
 
 This functionality can be desactivated by setting `jtsx-enable-jsx-electric-closing-element` to `nil`.
+
+ℹ️ _Code completion is not part of `jtsx`. You can get it to work by using [Eglot](https://github.com/joaotavora/eglot) (built-in Emacs), or any other lsp package._
 
 ### Code folding
 
