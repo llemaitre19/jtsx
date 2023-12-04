@@ -6,7 +6,7 @@
 ;; Maintainer: Loïc Lemaître <loic.lemaitre@gmail.com>
 ;; URL: https://github.com/llemaitre19/jtsx
 ;; Package-Requires: ((emacs "29.1"))
-;; Version: 0.2.1
+;; Version: 0.3.0
 ;; Keywords: languages
 
 ;; This file is NOT part of GNU Emacs.
@@ -38,6 +38,12 @@
 ;; * Jumping between opening and closing `JSX` elements
 ;; * Electric JSX closing element
 ;; * Code folding
+
+;; Note on the default configuration:
+;; This package doesn't automatically register its provided major modes into
+;; auto-mode-alist.  It is up to the user to do the association, letting him/her
+;; choose which of the provided modes he/she wants to use.  Same consideration
+;; applies for command shortcuts.
 
 ;;; Code:
 

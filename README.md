@@ -28,28 +28,7 @@ Emacs 29.1 or higher, built with `tree-sitter` support (`./configure --with-tree
 
 ### Package installation
 
-`jtsx` is not available for now on Melpa or equivalent package manager.
-But you can easily install it manually by cloning this repository:
-
-``` shell
-git clone https://github.com/llemaitre19/jtsx.git
-```
-
-and adding to your `Emacs` `init.el` file either:
-
-``` elisp
-(add-to-list 'load-path "path/to/jtsx")
-(require 'jtsx)
-```
-
-or if you use [use-package](https://github.com/jwiegley/use-package):
-
-``` elisp
-(use-package
-    :load-path "path/to/jtsx")
-```
-
-Another alternative is to use [straight.el](https://github.com/radian-software/straight.el).
+The straightforward way to install `jtsx` is through the [Melpa](https://melpa.org) package manager. You can find more informations on how to install a `Melpa` package [here](https://melpa.org/#/getting-started).
 
 ### `tree-sitter` languages installation
 
@@ -59,7 +38,7 @@ For more advanced usages, see `M-x treesit-install-language-grammar` command, or
 
 ### Full configuration example
 
-Here an example of configuration using `use-package`, to put in the `Emacs` `init.el`:
+Here an example of configuration using [use-package](https://github.com/jwiegley/use-package), to put in the `Emacs` `init.el`:
 
 * attach `jtsx-jsx-mode` to `JSX` and `JS` files
 * attach `jtsx-tsx-mode` to `TSX` and `TS` files
@@ -70,6 +49,7 @@ Here an example of configuration using `use-package`, to put in the `Emacs` `ini
 
 ``` elisp
 (use-package jtsx
+  :ensure t
   :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
          ("\\.tsx?\\'" . jtsx-tsx-mode))
   :commands jtsx-install-treesit-language

@@ -2,12 +2,16 @@
 
 # Changelog
 
-## master
+## Master
 
 * Moving an inline jsx element is now supported.
 * Wrapping an inline jsx element is now supported.
 * Fix wrapping jsx nested into a jsx element attribute.
 * Fix commenting jsx nested into a jsx element attribute.
+
+## 0.3.0
+
+* Now available on Melpa.
 * Set maximum level of syntax highlighting provided by `js-ts-mode` and `tsx-ts-mode` by default. Can be disabled with `jtsx-enable-all-syntax-highlighting-features` custom variable.
 
 ## 0.2.1 (2023-11-21)
