@@ -4,6 +4,7 @@
 
 ## master
 
+* Moving an inline jsx element is now supported.
 * Wrapping an inline jsx element is now supported.
 * Fix wrapping jsx nested into a jsx element attribute.
 * Fix commenting jsx nested into a jsx element attribute.
