@@ -2,6 +2,10 @@
 
 # jtsx
 
+[![MELPA](https://melpa.org/packages/jtsx-badge.svg)](https://melpa.org/#/jtsx)
+[![MELPA Stable](https://stable.melpa.org/packages/jtsx-badge.svg)](https://stable.melpa.org/#/jtsx)
+[![Tests result](https://github.com/llemaitre19/jtsx/actions/workflows/test.yml/badge.svg?branch%3Amaster)](https://github.com/llemaitre19/jtsx/actions?query=workflow%3ACI+branch%3Amaster+)
+
 ## Extends Emacs JSX/TSX built-in support
 
 `jtsx` is an Emacs package for editing `JSX` or `TSX` files. It provides `jtsx-jsx-mode` and `jtsx-tsx-mode` major modes implemented respectively on top of `js-ts-mode` and `tsx-ts-mode`, benefiting thus from the new built-in [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) feature.
