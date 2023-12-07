@@ -69,6 +69,8 @@ First element of ARGS and t are the new arguments."
   "Extends default treesit support for JSX/TSX."
   :group 'languages)
 
+;; TODO: the switch indentation level (ie case and default) should default to the major mode
+;; indentation level (most common than no indentation). To be done into a major jtsx release.
 (defcustom jtsx-switch-indent-offset 0
   "Offset for indenting the contents of a switch block.
 The value must not be negative."
@@ -720,8 +722,13 @@ WHEN indicates when the mode starts to be obsolete."
   :group 'jtsx
   (let ((ts-lang-key 'tsx))
     (when (treesit-ready-p ts-lang-key)
-      (setq-local jtsx-ts-indent-rules (typescript-ts-mode--indent-rules 'tsx))
-      (jtsx-configure-mode-base 'jtsx-tsx-mode jtsx-tsx-mode-map 'tsx
+      (setq-local jtsx-ts-indent-rules (typescript-ts-mode--indent-rules ts-lang-key))
+      ;; Remove specific indent rule for `case' and `default' (introduced by commit ab12628) which
+      ;; defeats `jtsx-switch-indent-offset' option.
+      (jtsx-ts-remove-indent-rule ts-lang-key  '((or (node-is "case")
+                                                     (node-is "default"))
+                                                 parent-bol typescript-ts-mode-indent-offset))
+      (jtsx-configure-mode-base 'jtsx-tsx-mode jtsx-tsx-mode-map ts-lang-key
                                 'typescript-ts-mode-indent-offset))))
 
 ;; Keep old tsx-mode for backward compatibility but mark it as obsolete.
