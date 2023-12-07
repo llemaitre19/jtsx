@@ -69,6 +69,8 @@ First element of ARGS and t are the new arguments."
   "Extends default treesit support for JSX/TSX."
   :group 'languages)
 
+;; TODO: the switch indentation level (ie case and default) should default to the major mode
+;; indentation level (most common than no indentation). To be done into a major jtsx release.
 (defcustom jtsx-switch-indent-offset 0
   "Offset for indenting the contents of a switch block.
 The value must not be negative."
@@ -729,9 +731,20 @@ WHEN indicates when the mode starts to be obsolete."
       (jtsx-ts-remove-indent-rule ts-lang-key
                                   '((node-is "switch_\\(?:case\\|default\\)") parent-bol 0))
       (when (version= emacs-version "29.1")
+        ;; Fix indentation bug.
+        ;; (see https://lists.gnu.org/archive/html/bug-gnu-emacs/2023-08/msg00676.html)
         (jtsx-ts-remove-indent-rule ts-lang-key '(js-jsx--treesit-indent-compatibility-bb1f97b))
         (mapc (lambda (rule) (jtsx-ts-add-indent-rule 'javascript rule))
               (js-jsx--treesit-indent-compatibility-bb1f97b)))
+      ;; Fix font lock bug when treesit-font-lock-level is equal to 4: property conflicts with jsx
+      ;; attribute font lock rule.
+      ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=67684)
+      (setq-local treesit-font-lock-feature-list
+                  ;; Let the 3 first levels unchanged
+                  `(,@(cl-subseq treesit-font-lock-feature-list 0 3)
+                    ;; Remove "property" in the 4th level
+                    ,(seq-filter (lambda (feat) (not (eq feat 'property)))
+                                 (nth 3 treesit-font-lock-feature-list))))
       (jtsx-configure-mode-base 'jtsx-jsx-mode jtsx-jsx-mode-map ts-lang-key 'js-indent-level))))
 
 ;; Keep old jsx-mode for backward compatibility but mark it as obsolete.
@@ -743,8 +756,13 @@ WHEN indicates when the mode starts to be obsolete."
   :group 'jtsx
   (let ((ts-lang-key 'tsx))
     (when (treesit-ready-p ts-lang-key)
-      (setq-local jtsx-ts-indent-rules (typescript-ts-mode--indent-rules 'tsx))
-      (jtsx-configure-mode-base 'jtsx-tsx-mode jtsx-tsx-mode-map 'tsx
+      (setq-local jtsx-ts-indent-rules (typescript-ts-mode--indent-rules ts-lang-key))
+      ;; Remove specific indent rule for `case' and `default' (introduced by commit ab12628) which
+      ;; defeats `jtsx-switch-indent-offset' option.
+      (jtsx-ts-remove-indent-rule ts-lang-key  '((or (node-is "case")
+                                                     (node-is "default"))
+                                                 parent-bol typescript-ts-mode-indent-offset))
+      (jtsx-configure-mode-base 'jtsx-tsx-mode jtsx-tsx-mode-map ts-lang-key
                                 'typescript-ts-mode-indent-offset))))
 
 ;; Keep old tsx-mode for backward compatibility but mark it as obsolete.
