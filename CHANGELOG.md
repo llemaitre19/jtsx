@@ -9,7 +9,7 @@
 * Fix wrapping jsx nested into a jsx element attribute.
 * Fix commenting jsx nested into a jsx element attribute.
 
-## 0.3.0
+## 0.3.0 (2023-12-04)
 
 * Now available on Melpa.
 * Set maximum level of syntax highlighting provided by `js-ts-mode` and `tsx-ts-mode` by default. Can be disabled with `jtsx-enable-all-syntax-highlighting-features` custom variable.
