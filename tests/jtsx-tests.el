@@ -109,7 +109,6 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (do-command-into-buffer-ret-content initial-content customize
                                       'jtsx-move-jsx-element-tag-backward mode))
 
-
 (defun move-forward-jsx-element-into-buffer (initial-content customize &optional mode)
   "Return the content of a temp buffer after having moved a jsx element forward.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
@@ -145,6 +144,13 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (let ((command (lambda () (call-interactively #'jtsx-jsx-electric-closing-element))))
     (do-command-into-buffer-ret-content initial-content customize command mode)))
 
+(defun add-interactive-newline-into-buffer (initial-content customize &optional mode)
+  "Return the content of a temp buffer after adding an interactive newline.
+Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
+Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
+  (let ((command (lambda () (newline 1 t))))
+    (do-command-into-buffer-ret-content initial-content customize command mode)))
+
 (defun wrap-in-jsx-element-into-buffer (initial-content customize &optional mode element-name)
   "Return the content of a temp buffer after wrapping some JSX with JSX element.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
@@ -161,7 +167,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (do-command-into-buffer-ret-position initial-content customize command mode)))
 
 (defun hs-find-block-beginning-into-buffer (initial-content customize &optional mode)
-  "Return point in a temp buffer after finding block beginning.
+   "Return point in a temp buffer after finding block beginning.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
 Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (do-command-into-buffer-ret-position initial-content customize 'jtsx-hs-find-block-beginning
@@ -914,6 +920,70 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (add-electric-closing-element-into-buffer content move-point #'jtsx-jsx-mode)
                    result))
     (should (equal (add-electric-closing-element-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+;; TEST ELECTRIC NEW LINE
+(ert-deftest jtsx-test-electric-newline-into-inline-element ()
+  (let ((jtsx-enable-electric-open-newline-between-jsx-element-tags t)
+        (move-point #'(lambda () (goto-char 8)))
+        (content "(\n  <A></A>\n);")
+        (result "(\n  <A>\n    \n  </A>\n);"))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-electric-newline-disabled ()
+  (let ((jtsx-enable-electric-open-newline-between-jsx-element-tags nil)
+        (move-point #'(lambda () (goto-char 8)))
+        (content "(\n  <A></A>\n);")
+        (result "(\n  <A>\n  </A>\n);"))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-electric-newline-into-inline-element-multiline ()
+  (let ((jtsx-enable-electric-open-newline-between-jsx-element-tags t)
+        (move-point #'(lambda () (goto-char 20)))
+        (content "(\n  <A\n    show\n  ></A>\n);")
+        (result "(\n  <A\n    show\n  >\n    \n  </A>\n);"))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-no-electric-newline-into-none-empty-inline-element ()
+  (let ((jtsx-enable-electric-open-newline-between-jsx-element-tags t)
+        (move-point #'(lambda () (goto-char 8)))
+        (content "(\n  <A>TEXT</A>\n);")
+        (result "(\n  <A>\n    TEXT</A>\n);"))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-no-electric-newline-into-none-inline-element ()
+  (let ((jtsx-enable-electric-open-newline-between-jsx-element-tags t)
+        (move-point #'(lambda () (goto-char 8)))
+        (content "(\n  <A>\n  </A>\n);")
+        (result "(\n  <A>\n    \n  </A>\n);"))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-no-electric-newline-into-opening-tag ()
+  (let ((jtsx-enable-electric-open-newline-between-jsx-element-tags t)
+        (move-point #'(lambda () (goto-char 7)))
+        (content "(\n  <A show></A>\n);")
+        (result "(\n  <A\n    show></A>\n);"))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-no-electric-newline-into-closing-tag ()
+  (let ((jtsx-enable-electric-open-newline-between-jsx-element-tags t)
+        (move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A></A>\n);")
+        (result "(\n  <A></\nA>\n);"))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (add-interactive-newline-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
 ;; TEST WRAPPING WITH JSX ELEMENT

@@ -60,13 +60,15 @@ Here an example of configuration using [use-package](https://github.com/jwiegley
   :hook ((jtsx-jsx-mode . hs-minor-mode)
          (jtsx-tsx-mode . hs-minor-mode))
   :custom
-  (js-indent-level 2)
-  (typescript-ts-mode-indent-offset 2)
-  (jtsx-switch-indent-offset 0)
-  (jtsx-indent-statement-block-regarding-standalone-parent nil)
-  (jtsx-jsx-element-move-allow-step-out t)
-  (jtsx-enable-jsx-electric-closing-element t)
-  (jtsx-enable-all-syntax-highlighting-features t)
+  ;; Optional customizations
+  ;; (js-indent-level 2)
+  ;; (typescript-ts-mode-indent-offset 2)
+  ;; (jtsx-switch-indent-offset 0)
+  ;; (jtsx-indent-statement-block-regarding-standalone-parent nil)
+  ;; (jtsx-jsx-element-move-allow-step-out t)
+  ;; (jtsx-enable-jsx-electric-closing-element t)
+  ;; (jtsx-enable-electric-open-newline-between-jsx-element-tags t)
+  ;; (jtsx-enable-all-syntax-highlighting-features t)
   :config
   (defun jtsx-bind-keys-to-mode-map (mode-map)
     "Bind keys to MODE-MAP."
@@ -139,9 +141,12 @@ Stepping out when moving can be desactivated by setting `jtsx-jsx-element-move-a
 
 When entering the `>` of an opening tag, the pending closing tag is automatically added right after the cursor if relevant (the function tries to guess if the closing addition is expected or not).
 
+
+Also, when inside an empty inline jsx element (typically right after automatic insertion of closing tag), pressing `ENTER` will insert 2 lines and let the cursor ready to insert children elements.
+
 ![Electricity](./examples/electricity.gif)
 
-This functionality can be desactivated by setting `jtsx-enable-jsx-electric-closing-element` to `nil`.
+These functionalities can be desactivated by setting `jtsx-enable-jsx-electric-closing-element` to `nil` and/or `jtsx-enable-electric-open-newline-between-jsx-element-tags` to `nil`.
 
 ℹ️ _Code completion is not part of `jtsx`. You can get it to work by using [Eglot](https://github.com/joaotavora/eglot) (built-in Emacs), or any other lsp package._
 
@@ -178,13 +183,14 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 
 ### Customizable variables
 
-| Variables                                                 | Default | Description                                                                                                                                                                                                                                             |
-|-----------------------------------------------------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `jtsx-switch-indent-offset`                               | `0`     | Offset for indenting the contents of a switch block. The value must not be negative.                                                                                                                                                                    |
-| `jtsx-indent-statement-block-regarding-standalone-parent` | `nil`   | Use standalone parent as anchor to evaluate statement block indentation. If t and if the parent of a statement block is not on its own line, the statement block will be indented relative to the beginning of the whole parent continuated expression. |
-| `jtsx-jsx-element-move-allow-step-out`                    | `t`     | Allow to step out when moving a jsx element.                                                                                                                                                                                                            |
-| `jtsx-enable-jsx-electric-closing-element`                | `t`     | Enable electric JSX closing element feature.                                                                                                                                                                                                            |
-| `jtsx-enable-all-syntax-highlighting-features`            | `t`     | Enable all available syntax highlighting features.                                                                                                                                                                                                      |
+| Variables                                                    | Default | Description                                                                                                                                                                                                                                             |
+|--------------------------------------------------------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `jtsx-switch-indent-offset`                                  | `0`     | Offset for indenting the contents of a switch block. The value must not be negative.                                                                                                                                                                    |
+| `jtsx-indent-statement-block-regarding-standalone-parent`    | `nil`   | Use standalone parent as anchor to evaluate statement block indentation. If t and if the parent of a statement block is not on its own line, the statement block will be indented relative to the beginning of the whole parent continuated expression. |
+| `jtsx-jsx-element-move-allow-step-out`                       | `t`     | Allow to step out when moving a jsx element.                                                                                                                                                                                                            |
+| `jtsx-enable-jsx-electric-closing-element`                   | `t`     | Enable electric JSX closing element feature.                                                                                                                                                                                                            |
+| `jtsx-enable-electric-open-newline-between-jsx-element-tags` | `t`     | Enable electric new line between jsx element tags                                                                                                                                                                                                       |
+| `jtsx-enable-all-syntax-highlighting-features`               | `t`     | Enable all available syntax highlighting features.                                                                                                                                                                                                      |
 
 ## FAQ
 

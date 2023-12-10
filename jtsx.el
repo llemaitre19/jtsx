@@ -99,6 +99,12 @@ continuated expression."
   :safe 'booleanp
   :group 'jtsx)
 
+(defcustom jtsx-enable-electric-open-newline-between-jsx-element-tags t
+  "Enable electric new line between jsx element tags."
+  :type 'boolean
+  :safe 'booleanp
+  :group 'jtsx)
+
 (defcustom jtsx-enable-all-syntax-highlighting-features t
   "Enable all available syntax highlighting features.
 If nil, default level defined by the underlying major mode is used.
@@ -529,6 +535,37 @@ N is a numeric prefix argument.  If greater than 1, insert N times `>', but
             (when (jtsx-treesit-syntax-error-p)
               (save-excursion (insert closing-tag)))))))))
 
+(defun jtsx-inside-empty-inline-jsx-element-p ()
+  "Return t if inside an empty inline jsx element.
+For example:
+<></>
+<A></A>
+<A
+  attribute
+></A>"
+  (when (jtsx-jsx-context-p)
+    (when-let* ((node (treesit-node-at (point))))
+      (when (equal (treesit-node-type node) "</")
+        (when-let* ((element-node (jtsx-enclosing-jsx-element node))
+                    (open-tag (treesit-node-child-by-field-name element-node "open_tag"))
+                    (close-tag (treesit-node-child-by-field-name element-node "close_tag"))
+                    (open-tag-end-line (line-number-at-pos (treesit-node-end open-tag)))
+                    (close-tag-start-line (line-number-at-pos (treesit-node-start close-tag)))
+                    ;; The function is called after newline insertion, so close tag is one line
+                    ;; after the opening one
+                    (inline-element-node (eq (- close-tag-start-line open-tag-end-line) 1)))
+          ;; Check that the element has no children others than open and close tag
+          (eq (treesit-node-child-count element-node) 2))))))
+
+(defun jtsx-electric-open-newline-between-jsx-element-tags-psif ()
+  "Honor `jtsx-enable-electric-open-newline-between-jsx-element-tags'.
+Member of `post-self-insert-hook'."
+  (when (and jtsx-enable-electric-open-newline-between-jsx-element-tags
+             (eq last-command-event ?\n)
+             (jtsx-jsx-context-p)
+             (jtsx-inside-empty-inline-jsx-element-p))
+    (save-excursion (newline 1 t))))
+
 (defun jtsx-trimmed-region ()
   "Return the trimmed region as a plist.
 Keys are `:start' and `:end'."
@@ -645,6 +682,9 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
   ;; Bind keys
   (define-key mode-map [remap comment-dwim] 'jtsx-comment-dwim)
   (define-key mode-map ">" #'jtsx-jsx-electric-closing-element)
+
+  ;; Add hook for electric new line
+  (add-hook 'post-self-insert-hook #'jtsx-electric-open-newline-between-jsx-element-tags-psif)
 
   ;; JSX folding with Hideshow
   (add-to-list 'hs-special-modes-alist
