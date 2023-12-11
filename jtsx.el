@@ -337,10 +337,8 @@ If BACKWARD is not nil, search for valid move before point, else after point.
 If ALLOW-STEP-IN is not nil, a move can go deeper in the JSX hierarchy.  Only
 used if FULL-ELEMENT-MOVE is t.
 Return a plist containing the move information : `:node-start', `:node-end',
- `:line'."
-  (let* ((current-node (jtsx-enclosing-jsx-node (treesit-node-on
-                                                 (save-excursion (back-to-indentation) (point))
-                                                 (pos-eol))
+ `:new-pos'."
+  (let* ((current-node (jtsx-enclosing-jsx-node (treesit-node-at (point))
                                                 jtsx-jsx-ts-element-tag-keys
                                                 jtsx-jsx-ts-root-keys
                                                 t
@@ -398,18 +396,28 @@ Return a plist containing the move information : `:node-start', `:node-end',
                  (t node-candidate))))
       (let ((node-start (treesit-node-start node))
             (node-end (treesit-node-end node))
-            (line (if backward
-                      (line-number-at-pos (treesit-node-start node-final-candidate))
-                    ;; +1 for insertion
-                    (1+ (line-number-at-pos (treesit-node-end node-final-candidate))))))
-        (cl-assert (and node-start node-end line) nil
-                   "Unable to retrieve line, node start or node end.")
-        (list :node-start node-start :node-end node-end :line line)))))
+            (new-pos (if backward
+                         (treesit-node-start node-final-candidate)
+                       (treesit-node-end node-final-candidate))))
+        (cl-assert (and node-start node-end new-pos) nil
+                   "Unable to evaluate new position, node start or node end.")
+        (list :node-start node-start :node-end node-end :new-pos new-pos)))))
 
 (defun jtsx-goto-line (line)
   "Go to the beginning of LINE."
   (goto-char (point-min))
   (forward-line (1- line)))
+
+(defun jtsx-bolc-at-p (pos)
+  "Check if POS is at the beginning of the line content."
+  (eq pos (save-excursion (goto-char pos)
+                          (back-to-indentation)
+                          (point))))
+
+(defun jtsx-eol-at-p (pos)
+  "Check if POS is at the end of the line."
+  (eq pos (save-excursion (goto-char pos)
+                          (pos-eol))))
 
 (defun jtsx-move-jsx-element (full-element-move backward &optional allow-step-in)
   "Move a JSX element (or any JSX root node).
@@ -423,22 +431,40 @@ used if FULL-ELEMENT-MOVE is t."
                                                       allow-step-in)))
           (let* ((node-start (plist-get res :node-start))
                  (node-end (plist-get res :node-end))
-                 (line (plist-get res :line))
-                 (region-start (save-excursion (goto-char node-start)(pos-bol)))
-                 (region-end (save-excursion (goto-char node-end) (forward-line 1) (point)))
-                 (lines-count (count-lines region-start region-end))
-                 ;; Take into account region lines for prev-line and yank-line depending on
-                 ;; the move direction.
-                 (prev-line (if backward  (+ (line-number-at-pos region-end) lines-count)
-                              (line-number-at-pos region-start)))
-                 (yank-line (- line (if backward 0 lines-count))))
-            (kill-region region-start region-end)
-            (jtsx-goto-line yank-line)
-            (yank '(1))
-            (indent-region (save-excursion (when (not backward) (jtsx-goto-line prev-line))
+                 (new-pos (plist-get res :new-pos))
+                 ;; Node is inline if after or before content on its own line
+                 (inline-node (or (not (jtsx-bolc-at-p node-start)) (not (jtsx-eol-at-p node-end))))
+                 ;; New position is inline if surrounded by content on its own line
+                 (inline-new-pos (and (not (jtsx-bolc-at-p new-pos)) (not (jtsx-eol-at-p new-pos))))
+                 (delete-region-start (if inline-node
+                                        node-start
+                                      ;; Extend region to include whitespaces and newlines
+                                      (save-excursion (goto-char node-start)
+                                                      (if backward
+                                                          (pos-bol)
+                                                        (forward-line -1) (pos-eol)))))
+                 (delete-region-end (if inline-node
+                                      node-end
+                                    ;; Extend region to include whitespaces and newlines
+                                    (save-excursion (goto-char node-end)
+                                                    (when backward (forward-line 1))
+                                                    (point))))
+                 ;; Copy and delete region are usefull when we want to delete whitespaces and
+                 ;; newlines but we do not want to paste them (eg inline new position)
+                 (copy-region-start (if inline-new-pos node-start delete-region-start))
+                 (copy-region-end (if inline-new-pos node-end delete-region-end))
+                 (cursor-rel-pos (- (point) copy-region-start)))
+            (copy-region-as-kill copy-region-start copy-region-end)
+            (let ((del-region (lambda () (delete-region delete-region-start delete-region-end))))
+              (when backward (funcall del-region))
+              (goto-char new-pos)
+              (yank '(1))
+              (unless backward (funcall del-region)))
+            (forward-char cursor-rel-pos) ; Try to prevent undesired cursor movements
+            (indent-region (save-excursion (goto-char (if backward new-pos delete-region-start))
                                            (pos-bol))
-                           (save-excursion (when backward (jtsx-goto-line prev-line))
-                                           (forward-line (- lines-count 1)) (pos-eol))))
+                           (save-excursion (goto-char (if backward delete-region-end new-pos))
+                                           (pos-eol))))
         (message "No move in this direction."))
     (message "Not inside jsx context.")))
 
@@ -544,11 +570,8 @@ ELEMENT-NAME is the name of the new wrapping element."
                (final-end-pos (treesit-node-end element-end))
                ;; Opening tag is considered inline if something is before it on the same line.
                ;; Same consideration for closing tag, but after it.
-               (inline-opening (not (eq final-start-pos (save-excursion (goto-char final-start-pos)
-                                                                        (back-to-indentation)
-                                                                        (point)))))
-               (inline-closing (not (eq final-end-pos (save-excursion (goto-char final-end-pos)
-                                                                      (pos-eol)))))
+               (inline-opening (not (jtsx-bolc-at-p final-start-pos)))
+               (inline-closing (not (jtsx-eol-at-p final-end-pos)))
                (opening-line (line-number-at-pos (treesit-node-start element-start)))
                (closing-line (+ (line-number-at-pos (treesit-node-end element-end))
                                 (if inline-closing 0 1))) ; +1 for insertion if not inline

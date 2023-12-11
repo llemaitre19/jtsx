@@ -4,6 +4,7 @@
 
 ## 0.3.1 (2023-12-11)
 
+* Moving an inline jsx element is now supported.
 * Fix JSX attribute coloration issue in jtsx-jsx-mode.
 * Wrapping an inline jsx element is now supported.
 * Fix wrapping jsx nested into a jsx element attribute.
