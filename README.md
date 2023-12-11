@@ -141,7 +141,6 @@ Stepping out when moving can be desactivated by setting `jtsx-jsx-element-move-a
 
 When entering the `>` of an opening tag, the pending closing tag is automatically added right after the cursor if relevant (the function tries to guess if the closing addition is expected or not).
 
-
 Also, when inside an empty inline jsx element (typically right after automatic insertion of closing tag), pressing `ENTER` will insert 2 lines and let the cursor ready to insert children elements.
 
 ![Electricity](./examples/electricity.gif)
@@ -179,7 +178,6 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 | `jtsx-move-jsx-element-step-in-forward`  | Move a JSX element (or any JSX root node) forward. Step into sibling elements if possible.                                      |
 | `jtsx-move-jsx-element-step-in-backward` | Move a JSX element (or any JSX root node) backward. Step into sibling elements if possible.                                     |
 | `jtsx-wrap-in-jsx-element`               | Wrap JSX root nodes in a JSX element. Nodes are selected by a region if there is an active one. Else the node at point is used. |
-
 
 ### Customizable variables
 
