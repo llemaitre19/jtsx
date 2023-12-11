@@ -2,7 +2,7 @@
 
 # Changelog
 
-## Master
+## 0.3.1 (2023-12-11)
 
 * Fix JSX attribute coloration issue in jtsx-jsx-mode.
 * Wrapping an inline jsx element is now supported.
