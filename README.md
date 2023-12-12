@@ -15,7 +15,7 @@ Summary of features and fixes:
 * Fix commenting and indenting issues with `JSX` code in Emacs built-in `js-ts-mode` and `tsx-ts-mode` modes
 * Refactoring: moving, wrapping, renaming `JSX` elements
 * Jumping between `JSX` opening and closing tags
-* Electric `JSX` closing tag
+* Electric `JSX` closing tag and new line
 * Code folding
 
 Note that `jtsx-jsx-mode` and `jtsx-tsx-mode` work as well respectively for standart `JS` and `TS` files.
@@ -141,7 +141,7 @@ Stepping out when moving can be desactivated by setting `jtsx-jsx-element-move-a
 
 When entering the `>` of an opening tag, the pending closing tag is automatically added right after the cursor if relevant (the function tries to guess if the closing addition is expected or not).
 
-Also, when inside an empty inline jsx element (typically right after automatic insertion of closing tag), pressing `ENTER` will insert 2 lines and let the cursor ready to insert children elements.
+Also, when inside an empty inline jsx element (typically right after automatic insertion of closing tag), pressing `ENTER` will insert 2 lines and let the cursor ready to add children elements.
 
 ![Electricity](./examples/electricity.gif)
 
