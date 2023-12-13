@@ -217,7 +217,7 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
 
 (defun jtsx-jump-jsx-opening-tag ()
   "Jump to the opening tag of the JSX element."
-  (interactive)
+  (interactive "^")
   (let ((enclosing-element (jtsx-enclosing-jsx-element-at-point)))
     (if enclosing-element
         (goto-char (1+ (treesit-node-start enclosing-element))) ; +1 to jump right after the "<"
@@ -225,7 +225,7 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
 
 (defun jtsx-jump-jsx-closing-tag ()
   "Jump to the closing tag of the JSX element."
-  (interactive)
+  (interactive "^")
   (let ((enclosing-element (jtsx-enclosing-jsx-element-at-point)))
     (if enclosing-element
         (goto-char (1- (treesit-node-end enclosing-element))) ; -1 to jump right before the "/>"
@@ -233,7 +233,7 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
 
 (defun jtsx-jump-jsx-element-tag-dwim ()
   "Jump either to the opening or the closing tag of the JSX element."
-  (interactive)
+  (interactive "^")
   (let ((enclosing-element (jtsx-enclosing-jsx-element-at-point)))
     (if enclosing-element
         (let ((start (treesit-node-start enclosing-element))
