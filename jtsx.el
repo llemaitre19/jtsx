@@ -243,25 +243,33 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
             (jtsx-jump-jsx-closing-tag))) ; We are closer to the opening tag.
       (message "No JSX element found."))))
 
-(defun jtsx-rename-jsx-identifier (node new-name)
-  "Rename the NODE named tag to NEW-NAME."
+(defun jtsx-rename-jsx-identifier (node new-name &optional move-cursor)
+  "Rename the NODE named tag to NEW-NAME.
+If MOVE-CURSOR is t, let the cursor at the end of the insertion."
   (let ((node-start (treesit-node-start node))
         (node-end (treesit-node-end node)))
     (cl-assert (and node-start node-end) nil "Unable to retrieve start or end of node.")
-    (save-excursion
-      (delete-region node-start node-end)
-      (goto-char node-start)
-      (insert new-name)
-      (point))))
+    (let ((new-identifier-end-pos (save-excursion
+                                    (delete-region node-start node-end)
+                                    (goto-char node-start)
+                                    (insert new-name)
+                                    (point))))
+      (when move-cursor
+        (goto-char new-identifier-end-pos)))
+    t))
 
-(defun jtsx-rename-jsx-fragment (node new-name)
-  "Rename the NODE fragment to NEW-NAME."
+(defun jtsx-rename-jsx-fragment (node new-name &optional move-cursor)
+  "Rename the NODE fragment to NEW-NAME.
+If MOVE-CURSOR is t, let the cursor at the end of the insertion."
   (let ((node-end (treesit-node-end node)))
     (cl-assert node-end nil "Unable to retrieve end of node.")
-    (save-excursion
-      (goto-char (1- node-end)) ; -1 to be inside <> or </>
-      (insert new-name)
-      (point))))
+    (let ((new-identifier-end-pos (save-excursion
+                                    (goto-char (1- node-end)) ; -1 to be inside <> or </>
+                                    (insert new-name)
+                                    (point))))
+      (when move-cursor
+        (goto-char new-identifier-end-pos)))
+    t))
 
 (defun jtsx-jsx-fragment-p (node)
   "Check if NODE is a JSX fragment."
@@ -270,7 +278,7 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
        ;; Other JSX elemeny tags have at least one additinal children which is the identifier.
        (eq (treesit-node-child-count node) 2)))
 
-(defun jtsx-rename-jsx-element-tag (new-name child-field-name &optional)
+(defun jtsx-rename-jsx-element-tag (new-name child-field-name)
   "Rename a JSX element tag to NEW-NAME.
 CHILD-FIELD-NAME identify the tag to rename (`open_tag' or `close_tag')."
   (cl-assert (member child-field-name '("open_tag" "close_tag"))
@@ -278,9 +286,18 @@ CHILD-FIELD-NAME identify the tag to rename (`open_tag' or `close_tag')."
   ;; Node and parent node are not passed as argument because they must be as up to
   ;; date as possible since the function alters the buffer and hense the treesit
   ;; tree.
-  ;; Note that treesit parser is robust enough to be not confused by mismaching
+  ;; Note that treesit parser is robust enough to be not too confused by mismaching
   ;; element tag identifiers.
   (let* ((node (treesit-node-at (point)))
+         ;; Field names can be wrong because of mismatching element tag identifiers, so
+         ;; using types is safer here.
+         (current-tag-node-type (treesit-node-type (treesit-node-parent node)))
+         ;; We want to move the cursor only for the tag the cursor is already into.
+         (move-cursor (or
+                       (and (equal current-tag-node-type "jsx_opening_element")
+                            (equal child-field-name "open_tag"))
+                       (and (equal current-tag-node-type "jsx_closing_element")
+                           (equal child-field-name "close_tag"))))
          (element-node (jtsx-enclosing-jsx-element node)))
     (cl-assert element-node nil "Unable to retrieve the enclosing jsx_element node.")
     (let* ((tag-node (treesit-node-child-by-field-name element-node child-field-name))
@@ -289,8 +306,8 @@ CHILD-FIELD-NAME identify the tag to rename (`open_tag' or `close_tag')."
                              ;; Get identifier node
                              (treesit-node-child-by-field-name tag-node "name"))))
       (cl-assert node-to-rename nil "Unable to retrieve the node to rename.")
-      (if fragment (jtsx-rename-jsx-fragment node-to-rename new-name)
-        (jtsx-rename-jsx-identifier node-to-rename new-name)))))
+      (if fragment (jtsx-rename-jsx-fragment node-to-rename new-name move-cursor)
+        (jtsx-rename-jsx-identifier node-to-rename new-name move-cursor)))))
 
 (defun jtsx-rename-jsx-element (new-name)
   "Rename a JSX element to NEW-NAME at point.
@@ -302,7 +319,7 @@ Point can be in the opening or closing."
          (parent-node-type (treesit-node-type parent-node)))
     (unless (and (member node-type '("identifier" ">"))
                  (cond ((equal parent-node-type "jsx_self_closing_element")
-                        (jtsx-rename-jsx-identifier node new-name))
+                        (jtsx-rename-jsx-identifier node new-name t))
                        ((member parent-node-type jtsx-jsx-ts-element-tag-keys)
                         (jtsx-rename-jsx-element-tag new-name "open_tag")
                         (jtsx-rename-jsx-element-tag new-name "close_tag"))))
