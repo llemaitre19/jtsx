@@ -1179,7 +1179,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
-(ert-deftest jtsx-test-delete-jsx-element-from-opening ()
+(ert-deftest jtsx-test-delete-jsx-element-from-closing ()
   (let ((move-point #'(lambda () (goto-char 31)))
         (content "(\n  <>\n    <A>\n      TEST\n    </A>\n  </>\n);")
         (result "(\n  <>\n    \n  </>\n);"))
