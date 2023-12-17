@@ -11,6 +11,7 @@
 
 ## 0.3.2 (2023-12-18)
 
+* Add unwrap and delete features.
 * Activate support for shift key when jumping.
 * Add support for wrapping a text selection (e.g. wrap some word of a text node with a `strong` element).
 * Make cursor position more consistent after renaming an element.

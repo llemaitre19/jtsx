@@ -207,13 +207,15 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
         enclosing-node
       (jtsx-enclosing-jsx-node node fallback-types nil include-node jsx-exp-guard))))
 
-(defun jtsx-enclosing-jsx-element (node)
-  "Get first parent of NODE matching `jsx_element' type."
-  (jtsx-enclosing-jsx-node node '("jsx_element") nil t))
+(defun jtsx-enclosing-jsx-element (node &optional jsx-exp-guard)
+  "Get first parent of NODE matching `jsx_element' type.
+If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
+  (jtsx-enclosing-jsx-node node '("jsx_element") nil t jsx-exp-guard))
 
-(defun jtsx-enclosing-jsx-element-at-point ()
-  "Get first parent matching `jsx_element' type at point."
-  (jtsx-enclosing-jsx-element (treesit-node-at (point))))
+(defun jtsx-enclosing-jsx-element-at-point (&optional jsx-exp-guard)
+  "Get first parent matching `jsx_element' type at point.
+If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
+  (jtsx-enclosing-jsx-element (treesit-node-at (point)) jsx-exp-guard))
 
 (defun jtsx-jump-jsx-opening-tag ()
   "Jump to the opening tag of the JSX element."
@@ -442,6 +444,12 @@ Return a plist containing the move information : `:node-start', `:node-end',
   (eq pos (save-excursion (goto-char pos)
                           (pos-eol))))
 
+(defun jtsx-inline-content-p (start-pos end-pos)
+  "Return t if the content between START-POS and END-POS is inline.
+The content is considered inline if there are some none whitespaces before
+or after it."
+  (or (not (jtsx-bolc-at-p start-pos)) (not (jtsx-eol-at-p end-pos))))
+
 (defun jtsx-move-jsx-element (full-element-move backward &optional allow-step-in)
   "Move a JSX element (or any JSX root node).
 Root nodes are defined in `jtsx-jsx-ts-root-keys'.
@@ -456,7 +464,7 @@ used if FULL-ELEMENT-MOVE is t."
                  (node-end (plist-get res :node-end))
                  (new-pos (plist-get res :new-pos))
                  ;; Node is inline if after or before content on its own line
-                 (inline-node (or (not (jtsx-bolc-at-p node-start)) (not (jtsx-eol-at-p node-end))))
+                 (inline-node (jtsx-inline-content-p node-start node-end))
                  ;; New position is inline if surrounded by content on its own line
                  (inline-new-pos (and (not (jtsx-bolc-at-p new-pos)) (not (jtsx-eol-at-p new-pos))))
                  (delete-region-start (if inline-node
@@ -502,23 +510,23 @@ used if FULL-ELEMENT-MOVE is t."
   (jtsx-move-jsx-element nil t))
 
 (defun jtsx-move-jsx-element-forward ()
-  "Move a JSX element (or any JSX root node) forward."
+  "Move a JSX element (or any JSX node) forward."
   (interactive)
   (jtsx-move-jsx-element t nil))
 
 (defun jtsx-move-jsx-element-backward ()
-  "Move a JSX element (or any JSX root node) backward."
+  "Move a JSX element (or any JSX node) backward."
   (interactive)
   (jtsx-move-jsx-element t t))
 
 (defun jtsx-move-jsx-element-step-in-forward ()
-  "Move a JSX element (or any JSX root node) forward.
+  "Move a JSX element (or any JSX node) forward.
 Step into sibling elements if possible."
   (interactive)
   (jtsx-move-jsx-element t nil t))
 
 (defun jtsx-move-jsx-element-step-in-backward ()
-  "Move a JSX element (or any JSX root node) backward.
+  "Move a JSX element (or any JSX node) backward.
 Step into sibling elements if possible."
   (interactive)
   (jtsx-move-jsx-element t t t))
@@ -630,7 +638,7 @@ Keys are `:start' and `:end'."
       `(:start ,(treesit-node-start start-element) :end ,(treesit-node-end end-element)))))
 
 (defun jtsx-wrap-in-jsx-element (element-name)
-  "Wrap JSX root nodes in a JSX element.
+  "Wrap JSX nodes in a JSX element.
 Nodes are selected by a region if there is an active one.  Else the node at
  point is used.
 ELEMENT-NAME is the name of the new wrapping element."
@@ -639,11 +647,7 @@ ELEMENT-NAME is the name of the new wrapping element."
       (let* ((region-to-wrap (jtsx-region-to-wrap))
              (start-pos (plist-get region-to-wrap :start))
              (end-pos (plist-get region-to-wrap :end))
-             ;; Opening tag is considered inline if something is before it on the same line.
-             ;; Same consideration for closing tag, but after it.
-             (inline-opening (not (jtsx-bolc-at-p start-pos)))
-             (inline-closing (not (jtsx-eol-at-p end-pos)))
-             (inline-element (or inline-opening inline-closing))
+             (inline-element (jtsx-inline-content-p start-pos end-pos))
              (opening-line (line-number-at-pos start-pos))
              (closing-line (+ (line-number-at-pos end-pos)
                               (if inline-element 0 1))) ; +1 for insertion if not inline
@@ -663,6 +667,62 @@ ELEMENT-NAME is the name of the new wrapping element."
                        (save-excursion (jtsx-goto-line (+ closing-line (if inline-element 0 1)))
                                        (pos-eol)))))
   (message "Not inside jsx context."))
+
+(defun jtsx-unwrap-jsx ()
+  "Unwrap JSX nodes wrapped in the node at point."
+  (interactive)
+  (if (jtsx-jsx-context-p)
+      (if-let ((node (jtsx-enclosing-jsx-element-at-point t)))
+          (let* ((opening-tag (treesit-node-child-by-field-name node "open_tag"))
+                 (closing-tag (treesit-node-child-by-field-name node "close_tag"))
+                 (opening-start-pos (treesit-node-start opening-tag))
+                 (opening-end-pos (treesit-node-end opening-tag))
+                 (closing-start-pos (treesit-node-start closing-tag))
+                 (closing-end-pos (treesit-node-end closing-tag)))
+            (cl-assert (and opening-start-pos
+                            opening-end-pos
+                            closing-start-pos
+                            closing-end-pos)
+                       "At least one of the opening or closing element positions is nil.")
+            (let* ((inline-opening-tag (jtsx-inline-content-p opening-start-pos opening-end-pos))
+                   (inline-closing-tag (jtsx-inline-content-p closing-start-pos closing-end-pos))
+                   (final-opening-start-pos (if inline-opening-tag
+                                                opening-start-pos
+                                              (save-excursion (goto-char opening-start-pos)
+                                                              (forward-line -1)
+                                                              (pos-eol))))
+                   (final-opening-end-pos opening-end-pos)
+                   (final-closing-start-pos closing-start-pos)
+                   (final-closing-end-pos (if inline-closing-tag
+                                              closing-end-pos
+                                            (save-excursion (goto-char closing-end-pos)
+                                                            (forward-line 1)
+                                                            (point))))
+                   (wrapped-region-size (- final-closing-start-pos final-opening-end-pos)))
+            (delete-region final-closing-start-pos final-closing-end-pos)
+            (delete-region final-opening-start-pos final-opening-end-pos)
+            (indent-region final-opening-start-pos (+ final-opening-start-pos
+                                                      wrapped-region-size))
+            (goto-char (1+ opening-start-pos)))) ; +1 to ensure to be inside the children
+        (message "Not able to retrieve the wrapping node."))
+    (message "Not inside jsx context.")))
+
+(defun jtsx-delete-jsx-node ()
+  "Delete a JSX node at point and its children."
+  (interactive)
+  (if (jtsx-jsx-context-p)
+      (if-let ((node (jtsx-enclosing-jsx-node (treesit-node-at (point))
+                                              jtsx-jsx-ts-root-keys
+                                              nil
+                                              t
+                                              t)))
+          (let ((start-pos (treesit-node-start node))
+                (end-pos (treesit-node-end node)))
+            (cl-assert (and start-pos end-pos) "`start-pos' or `end-pos' is nil.")
+            ;; Use kill-region to save the content into the clipboard.
+            (kill-region start-pos end-pos))
+        (message "Not able to retrieve the node to delete."))
+    (message "Not inside jsx context.")))
 
 (defun jtsx-hs-forward-sexp (n)
   "Make `forward-sexp' compatible with Hideshow in JSX.

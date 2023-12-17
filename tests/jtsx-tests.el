@@ -159,6 +159,18 @@ ELEMENT-NAME is the name of the wrapping element."
   (let ((command (lambda () (jtsx-wrap-in-jsx-element (or element-name "W")))))
     (do-command-into-buffer-ret-content initial-content customize command mode)))
 
+(defun unwrap-jsx-into-buffer (initial-content customize &optional mode)
+  "Return the content of a temp buffer after unwrapping some JSX at point.
+Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
+Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
+  (do-command-into-buffer-ret-content initial-content customize 'jtsx-unwrap-jsx mode))
+
+(defun delete-jsx-node-into-buffer (initial-content customize &optional mode)
+  "Return the content of a temp buffer after deleting a JSX node at point.
+Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
+Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
+  (do-command-into-buffer-ret-content initial-content customize 'jtsx-delete-jsx-node))
+
 (defun hs-forward-sexp-into-buffer (initial-content customize &optional mode)
   "Return point in a temp buffer after forwarding sexp.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
@@ -1129,6 +1141,85 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
         (result "(<><W><A /></W></>);"))
     (should (equal (wrap-in-jsx-element-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (wrap-in-jsx-element-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+;; TEST UNWRAP JSX
+(ert-deftest jtsx-test-unwrap ()
+  (let ((move-point #'(lambda () (goto-char 12)))
+        (content "(\n  <>\n    <W>\n      <A />\n    </W>\n  </>\n);")
+        (result "(\n  <>\n    <A />\n  </>\n);"))
+    (should (equal (unwrap-jsx-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (unwrap-jsx-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-unwrap-inline ()
+  (let ((move-point #'(lambda () (goto-char 4)))
+        (content "(<><W><A /></W></>);")
+        (result "(<><A /></>);"))
+    (should (equal (unwrap-jsx-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (unwrap-jsx-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-unwrap-inside-attribute ()
+  (let ((move-point #'(lambda () (goto-char 26)))
+        (content "(\n  <A\n    attr={(\n      <W>\n        <B />\n      </W>\n    )}\n  />\n);")
+        (result "(\n  <A\n    attr={(\n      <B />\n    )}\n  />\n);"))
+    (should (equal (unwrap-jsx-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (unwrap-jsx-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-unwrap-failed ()
+  (let ((move-point #'(lambda () (goto-char 2)))
+        (content "(<A />);")
+        (result "(<A />);"))
+    (should (equal (unwrap-jsx-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (unwrap-jsx-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+;; TEST DELETE JSX NODE
+(ert-deftest jtsx-test-delete-jsx-element-from-opening ()
+  (let ((move-point #'(lambda () (goto-char 12)))
+        (content "(\n  <>\n    <A\n      attr\n    >\n      TEST\n    </A>\n  </>\n);")
+        (result "(\n  <>\n    \n  </>\n);"))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-jsx-element-from-opening ()
+  (let ((move-point #'(lambda () (goto-char 31)))
+        (content "(\n  <>\n    <A>\n      TEST\n    </A>\n  </>\n);")
+        (result "(\n  <>\n    \n  </>\n);"))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-jsx-self-closing-element ()
+  (let ((move-point #'(lambda () (goto-char 12)))
+        (content "(\n  <>\n    <A/>\n  </>\n);")
+        (result "(\n  <>\n    \n  </>\n);"))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-jsx-text ()
+  (let ((move-point #'(lambda () (goto-char 12)))
+        (content "(\n  <>\n    TEST\n  </>\n);")
+        (result "(\n  <>\n    \n  </>\n);"))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-jsx-expression ()
+  (let ((move-point #'(lambda () (goto-char 12)))
+        (content "(\n  <>\n    {`TEST'}\n  </>\n);")
+        (result "(\n  <>\n    \n  </>\n);"))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-inline-jsx-node ()
+  (let ((move-point #'(lambda () (goto-char 6)))
+        (content "(<>{test()}</>);")
+        (result "(<></>);"))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-jsx-node-inside-attribute ()
+  (let ((move-point #'(lambda () (goto-char 25)))
+        (content "(\n  <A\n    attr={(\n      <B />\n    )}\n  />\n);")
+        (result "(\n  <A\n    attr={(\n      \n    )}\n  />\n);"))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
 ;; TEST HIDESHOW CUSTOMIZATION
 (ert-deftest jtsx-test-hs-forward-sexp-jsx-element ()
