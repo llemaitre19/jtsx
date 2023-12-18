@@ -2,7 +2,7 @@
 
 # Changelog
 
-## master
+## 0.3.2 (2023-12-18)
 
 * Moving an inline jsx element is now supported.
 
