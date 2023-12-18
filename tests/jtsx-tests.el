@@ -169,7 +169,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   "Return the content of a temp buffer after deleting a JSX node at point.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
 Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
-  (do-command-into-buffer-ret-content initial-content customize 'jtsx-delete-jsx-node))
+  (do-command-into-buffer-ret-content initial-content customize 'jtsx-delete-jsx-node mode))
 
 (defun hs-forward-sexp-into-buffer (initial-content customize &optional mode)
   "Return point in a temp buffer after forwarding sexp.
