@@ -2,7 +2,7 @@
 
 # Changelog
 
-## Master
+## 0.3.3 (2024-01-04)
 
 * Activate support for shift key when jumping.
 * Add support for wrapping a text selection (e.g. wrap some word of a text node with a `strong` element).
