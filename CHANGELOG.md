@@ -2,9 +2,12 @@
 
 # Changelog
 
-## 0.3.3 (2024-01-04)
+## Master
 
 * Add unwrap and delete features.
+
+## 0.3.3 (2024-01-04)
+
 * Activate support for shift key when jumping.
 * Add support for wrapping a text selection (e.g. wrap some word of a text node with a `strong` element).
 * Make cursor position more consistent after renaming an element.
@@ -12,10 +15,6 @@
 
 ## 0.3.2 (2023-12-18)
 
-* Activate support for shift key when jumping.
-* Add support for wrapping a text selection (e.g. wrap some word of a text node with a `strong` element).
-* Make cursor position more consistent after renaming an element.
-* Add electric new line support for empty inline elements.
 * Moving an inline jsx element is now supported.
 
 ## 0.3.1 (2023-12-11)
