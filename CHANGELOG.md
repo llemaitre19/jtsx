@@ -5,6 +5,7 @@
 ## Master
 
 * Add unwrap and delete features.
+* Fix jsx electric newline having side effects in none jtsx buffers.
 
 ## 0.3.3 (2024-01-04)
 

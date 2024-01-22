@@ -779,7 +779,7 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
   (define-key mode-map ">" #'jtsx-jsx-electric-closing-element)
 
   ;; Add hook for electric new line
-  (add-hook 'post-self-insert-hook #'jtsx-electric-open-newline-between-jsx-element-tags-psif)
+  (add-hook 'post-self-insert-hook #'jtsx-electric-open-newline-between-jsx-element-tags-psif nil t)
 
   ;; JSX folding with Hideshow
   (add-to-list 'hs-special-modes-alist
