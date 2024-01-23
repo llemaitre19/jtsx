@@ -93,6 +93,12 @@ continuated expression."
   :safe 'booleanp
   :group 'jtsx)
 
+(defcustom jtsx-enable-jsx-element-tags-auto-sync nil
+  "Enable jsx element tags automatic synchronization."
+  :type 'boolean
+  :safe 'booleanp
+  :group 'jtsx)
+
 (defcustom jtsx-enable-jsx-electric-closing-element t
   "Enable electric JSX closing element feature."
   :type 'boolean
@@ -343,37 +349,37 @@ Point can be in the opening or closing."
 
 (defun jtsx-synchronize-jsx-element-tags ()
   "Synchronize jsx element tags depending on the cursor position."
-  (let* ((node (treesit-node-at (point)))
-         (parent-node (treesit-node-parent node))
-         (parent-node-type (treesit-node-type parent-node)))
-    (when (and (member (treesit-node-type node) '("identifier" ">" "<"))
-               (member parent-node-type jtsx-jsx-ts-element-tag-keys))
-      (let* ((element-node (treesit-node-parent parent-node))
-             (opening-tag-node (treesit-node-child-by-field-name element-node "open_tag"))
-             (closing-tag-node (treesit-node-child-by-field-name element-node "close_tag")))
-        (if (jtsx-empty-opening-tag-name-p opening-tag-node)
-            ;; Handle tree-sitter edge cases < attribute></x>
-            (cond ((eq (point) (1+ (treesit-node-start opening-tag-node)))
-                   ;; `x' has just been erased in the opening tag and tree-sitter assumes now that
-                   ;; `attribute' is the tag name even if `attribute' is preceded by some spaces.
-                   ;; Here we alter this behaviour by considering `attribute' as an attribute as
-                   ;; soon as it remains space right before it.
-                   (jtsx-rename-jsx-element-tag-at-point "" "close_tag"))
-                  ((eq (point) (1- (treesit-node-end closing-tag-node)))
-                   ;; Opposite case : `x' has just been entered
-                   (save-excursion (goto-char (1+ (treesit-node-start opening-tag-node)))
-                     (insert (jtsx-jsx-element-tag-name closing-tag-node)))))
-          ;; General case
-          (let ((opening-tag-name (jtsx-jsx-element-tag-name opening-tag-node))
-                (closing-tag-name (jtsx-jsx-element-tag-name closing-tag-node)))
-            (unless (equal opening-tag-name closing-tag-name)
-              (let* ((inside-opening-tag-p (equal parent-node-type "jsx_opening_element"))
-                     (tag-to-rename (if inside-opening-tag-p "close_tag" "open_tag"))
-                     (tag-name (if (equal tag-to-rename "open_tag")
-                                   closing-tag-name
-                                 opening-tag-name)))
-                (jtsx-rename-jsx-element-tag-at-point tag-name tag-to-rename)))))))))
-
+  (when jtsx-enable-jsx-element-tags-auto-sync
+    (let* ((node (treesit-node-at (point)))
+           (parent-node (treesit-node-parent node))
+           (parent-node-type (treesit-node-type parent-node)))
+      (when (and (member (treesit-node-type node) '("identifier" ">" "<"))
+                 (member parent-node-type jtsx-jsx-ts-element-tag-keys))
+        (let* ((element-node (treesit-node-parent parent-node))
+               (opening-tag-node (treesit-node-child-by-field-name element-node "open_tag"))
+               (closing-tag-node (treesit-node-child-by-field-name element-node "close_tag")))
+          (if (jtsx-empty-opening-tag-name-p opening-tag-node)
+              ;; Handle tree-sitter edge cases < attribute></x>
+              (cond ((eq (point) (1+ (treesit-node-start opening-tag-node)))
+                     ;; `x' has just been erased in the opening tag and tree-sitter assumes now that
+                     ;; `attribute' is the tag name even if `attribute' is preceded by some spaces.
+                     ;; Here we alter this behaviour by considering `attribute' as an attribute as
+                     ;; soon as it remains space right before it.
+                     (jtsx-rename-jsx-element-tag-at-point "" "close_tag"))
+                    ((eq (point) (1- (treesit-node-end closing-tag-node)))
+                     ;; Opposite case : `x' has just been entered
+                     (save-excursion (goto-char (1+ (treesit-node-start opening-tag-node)))
+                                     (insert (jtsx-jsx-element-tag-name closing-tag-node)))))
+            ;; General case
+            (let ((opening-tag-name (jtsx-jsx-element-tag-name opening-tag-node))
+                  (closing-tag-name (jtsx-jsx-element-tag-name closing-tag-node)))
+              (unless (equal opening-tag-name closing-tag-name)
+                (let* ((inside-opening-tag-p (equal parent-node-type "jsx_opening_element"))
+                       (tag-to-rename (if inside-opening-tag-p "close_tag" "open_tag"))
+                       (tag-name (if (equal tag-to-rename "open_tag")
+                                     closing-tag-name
+                                   opening-tag-name)))
+                  (jtsx-rename-jsx-element-tag-at-point tag-name tag-to-rename))))))))))
 (defun jtsx-first-child-jsx-node (node types &optional backward)
   "Find the first child of NODE matching one of the TYPES.
 If BACKWARD is not nil, start the search by the last children of NODE."
