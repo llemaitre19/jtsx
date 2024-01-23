@@ -277,11 +277,11 @@ If MOVE-CURSOR is t, let the cursor at the end of the insertion."
   "Check if NODE is a JSX fragment."
   (and (member (treesit-node-type node) jtsx-jsx-ts-element-tag-keys)
        ;; JSX Fragment tags only have 2 children : "<" (or "</") and ">".
-       ;; Other JSX elemeny tags have at least one additinal children which is the identifier.
+       ;; Other JSX elemeny tags have at least one additinal child which is the identifier.
        (eq (treesit-node-child-count node) 2)))
 
-(defun jtsx-rename-jsx-element-tag (new-name child-field-name)
-  "Rename a JSX element tag to NEW-NAME.
+(defun jtsx-rename-jsx-element-tag-at-point (new-name child-field-name)
+  "Rename a JSX element tag to NEW-NAME at point.
 CHILD-FIELD-NAME identify the tag to rename (`open_tag' or `close_tag')."
   (cl-assert (member child-field-name '("open_tag" "close_tag"))
              t "Unexpected child-field-name: %s.")
@@ -316,16 +316,63 @@ CHILD-FIELD-NAME identify the tag to rename (`open_tag' or `close_tag')."
 Point can be in the opening or closing."
   (interactive "sRename element to: ")
   (let* ((node (treesit-node-at (point)))
-         (node-type (treesit-node-type node))
          (parent-node (treesit-node-parent node))
          (parent-node-type (treesit-node-type parent-node)))
-    (unless (and (member node-type '("identifier" ">"))
+    (unless (and (member (treesit-node-type node) '("identifier" ">"))
                  (cond ((equal parent-node-type "jsx_self_closing_element")
                         (jtsx-rename-jsx-identifier node new-name t))
                        ((member parent-node-type jtsx-jsx-ts-element-tag-keys)
-                        (jtsx-rename-jsx-element-tag new-name "open_tag")
-                        (jtsx-rename-jsx-element-tag new-name "close_tag"))))
+                        (jtsx-rename-jsx-element-tag-at-point new-name "open_tag")
+                        (jtsx-rename-jsx-element-tag-at-point new-name "close_tag"))))
       (message "No JSX element to rename."))))
+
+(defun jtsx-jsx-element-tag-name (node)
+  "Return the NODE tag name."
+    (if-let (identifier-node (treesit-node-child-by-field-name node "name"))
+      (buffer-substring-no-properties
+       (treesit-node-start identifier-node)
+       (treesit-node-end identifier-node))
+      ""))
+
+(defun jtsx-empty-opening-tag-name-p (opening-tag-node)
+  "Return whether the OPENING-TAG-NODE has an empty tag name or not."
+  (let ((identifier-node (treesit-node-child-by-field-name opening-tag-node "name")))
+    (and identifier-node
+         (not (eq (treesit-node-start opening-tag-node)
+                  (1- (treesit-node-start identifier-node)))))))
+
+(defun jtsx-synchronize-jsx-element-tags ()
+  "Synchronize jsx element tags depending on the cursor position."
+  (let* ((node (treesit-node-at (point)))
+         (parent-node (treesit-node-parent node))
+         (parent-node-type (treesit-node-type parent-node)))
+    (when (and (member (treesit-node-type node) '("identifier" ">" "<"))
+               (member parent-node-type jtsx-jsx-ts-element-tag-keys))
+      (let* ((element-node (treesit-node-parent parent-node))
+             (opening-tag-node (treesit-node-child-by-field-name element-node "open_tag"))
+             (closing-tag-node (treesit-node-child-by-field-name element-node "close_tag")))
+        (if (jtsx-empty-opening-tag-name-p opening-tag-node)
+            ;; Handle tree-sitter edge cases < attribute></x>
+            (cond ((eq (point) (1+ (treesit-node-start opening-tag-node)))
+                   ;; `x' has just been erased in the opening tag and tree-sitter assumes now that
+                   ;; `attribute' is the tag name even if `attribute' is preceded by some spaces.
+                   ;; Here we alter this behaviour by considering `attribute' as an attribute as
+                   ;; soon as it remains space right before it.
+                   (jtsx-rename-jsx-element-tag-at-point "" "close_tag"))
+                  ((eq (point) (1- (treesit-node-end closing-tag-node)))
+                   ;; Opposite case : `x' has just been entered
+                   (save-excursion (goto-char (1+ (treesit-node-start opening-tag-node)))
+                     (insert (jtsx-jsx-element-tag-name closing-tag-node)))))
+          ;; General case
+          (let ((opening-tag-name (jtsx-jsx-element-tag-name opening-tag-node))
+                (closing-tag-name (jtsx-jsx-element-tag-name closing-tag-node)))
+            (unless (equal opening-tag-name closing-tag-name)
+              (let* ((inside-opening-tag-p (equal parent-node-type "jsx_opening_element"))
+                     (tag-to-rename (if inside-opening-tag-p "close_tag" "open_tag"))
+                     (tag-name (if (equal tag-to-rename "open_tag")
+                                   closing-tag-name
+                                 opening-tag-name)))
+                (jtsx-rename-jsx-element-tag-at-point tag-name tag-to-rename)))))))))
 
 (defun jtsx-first-child-jsx-node (node types &optional backward)
   "Find the first child of NODE matching one of the TYPES.
@@ -774,20 +821,6 @@ If ADD-FIRST is not nil, preprend the RULE in the list for priority purpose."
   "Base function for JSX/TSX Major mode configuration.
 MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
  depending on the mode."
-  ;; Bind keys
-  (define-key mode-map [remap comment-dwim] 'jtsx-comment-dwim)
-  (define-key mode-map ">" #'jtsx-jsx-electric-closing-element)
-
-  ;; Add hook for electric new line
-  (add-hook 'post-self-insert-hook #'jtsx-electric-open-newline-between-jsx-element-tags-psif nil t)
-
-  ;; JSX folding with Hideshow
-  (add-to-list 'hs-special-modes-alist
-               `(,mode "{\\|(\\|<[^/>]*>" "}\\|)\\|</[^/>]*>" "/[*/]"
-                       jtsx-hs-forward-sexp
-                       nil
-                       jtsx-hs-find-block-beginning))
-
   ;; Patch indentation
   (jtsx-ts-add-indent-rule ts-lang-key
                            `((parent-is "switch_body") parent-bol ,jtsx-switch-indent-offset))
@@ -813,7 +846,31 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
     (setq-local treesit-font-lock-level 4))
 
   ;; Apply treesit customization
-  (treesit-major-mode-setup))
+  (treesit-major-mode-setup)
+
+  ;; Bind keys
+  (define-key mode-map [remap comment-dwim] 'jtsx-comment-dwim)
+  (define-key mode-map ">" #'jtsx-jsx-electric-closing-element)
+
+  ;; Add hook for electric new line
+  (add-hook 'post-self-insert-hook #'jtsx-electric-open-newline-between-jsx-element-tags-psif nil t)
+
+  ;; Add hook for automatic synchronization of jsx element tags.
+  ;; `DEPTH' value explanation: some completion packages rely on `buffer-chars-modified-tick'
+  ;; function to check if completion process is outdated. `jtsx-synchronize-jsx-element-tags' can
+  ;; alter `buffer-chars-modified-tick', so it should occur before the completion process starts,
+  ;; in order not to conflict with it.
+  ;; As soon as `DEPTH' is below to 0 (default value), this is enough to run the hook prior to any
+  ;; other `post-command-hook' that have a default `DEPTH' value. This seems to be the case for many
+  ;; popular completion packages : `company-mode', `corfu', `vertico', `auto-complete'.
+  (add-hook 'post-command-hook #'jtsx-synchronize-jsx-element-tags -1 t)
+
+  ;; JSX folding with Hideshow
+  (add-to-list 'hs-special-modes-alist
+               `(,mode "{\\|(\\|<[^/>]*>" "}\\|)\\|</[^/>]*>" "/[*/]"
+                       jtsx-hs-forward-sexp
+                       nil
+                       jtsx-hs-find-block-beginning)))
 
 (defun jtsx-prioritize-mode-if-present (mode)
   "Prioritize MODE entries in `auto-mode-alist'."
