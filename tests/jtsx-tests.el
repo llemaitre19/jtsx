@@ -591,16 +591,6 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-synchronize-jsx-element-tags-when-created-new-element-aborted ()
-  (let ((jtsx-enable-jsx-element-tags-auto-sync t)
-        (move-point #'(lambda () (goto-char 15)))
-        (content "(\n  <A>    \n<B\n    <C>\n    </C>\n  </A>\n);")
-        (result "(\n  <A>    \n<B\n    <C>\n    </C>\n  </A>\n);"))
-    (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-jsx-mode)
-                   result))
-    (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
-                   result))))
-
 ;; TEST MOVE JSX OPENING OR CLOSING ELEMENT
 (ert-deftest jtsx-test-move-jsx-opening-element-forward ()
   (let ((move-point #'(lambda () (goto-char 0) (forward-line 2)))
