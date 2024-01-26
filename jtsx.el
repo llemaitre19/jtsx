@@ -130,6 +130,16 @@ See `treesit-font-lock-level' for more informations."
 
 (defvar jtsx-ts-indent-rules)
 
+(defvar jtsx-last-buffer-chars-modifed-tick 0)
+
+(defun jtsx-save-buffer-chars-modified-tick ()
+  "Save the returned value of `buffer-chars-modified-tick' function."
+  (setq jtsx-last-buffer-chars-modifed-tick (buffer-chars-modified-tick)))
+
+(defun jtsx-command-modified-buffer-p ()
+  "Check if last command has modified the buffer."
+  (< jtsx-last-buffer-chars-modifed-tick (buffer-chars-modified-tick)))
+
 (defun jtsx-node-jsx-context-p (node)
   "Check if NODE inside JSX context."
   (member (treesit-node-type node) '("jsx_expression"
@@ -332,6 +342,32 @@ Point can be in the opening or closing."
                         (jtsx-rename-jsx-element-tag-at-point new-name "close_tag"))))
       (message "No JSX element to rename."))))
 
+(defun jtsx-treesit-syntax-error-in-descendants-p (node)
+  "Check recursively if there are errors reported by treesit in NODE descendants."
+  (let ((children-nodes (treesit-node-children node))
+        (index 0))
+    (catch 'syntax-error-found
+      (while (< index (length children-nodes))
+        (let ((child-node (nth index children-nodes)))
+          (when (or (equal (treesit-node-type child-node) "ERROR")
+                    ;; Can happen in the TSX tree-sitter parser in that situation:
+                    ;; <>
+                    ;;   <div
+                    ;;   <p>
+                    ;;   </p>
+                    ;; </>
+                    ;; In that case <p> is recognized as a type argument and the missing ">"
+                    ;; is registered by the parser as having a start and end at the same position.
+                    (and (equal (treesit-node-type child-node) ">")
+                         (eq (treesit-node-start child-node)  (treesit-node-end child-node)))
+                    (jtsx-treesit-syntax-error-in-descendants-p child-node))
+            (throw 'syntax-error-found t))
+        (setq index (1+ index)))))))
+
+(defun jtsx-treesit-syntax-error-in-ancestors-p (node)
+  "Check recursively if there are errors reported by treesit in NODE ancestors."
+  (jtsx-enclosing-jsx-node node '("ERROR")))
+
 (defun jtsx-jsx-element-tag-name (node)
   "Return the NODE tag name."
     (if-let (identifier-node (treesit-node-child-by-field-name node "name"))
@@ -349,12 +385,16 @@ Point can be in the opening or closing."
 
 (defun jtsx-synchronize-jsx-element-tags ()
   "Synchronize jsx element tags depending on the cursor position."
-  (when jtsx-enable-jsx-element-tags-auto-sync
+  (when (and jtsx-enable-jsx-element-tags-auto-sync (jtsx-command-modified-buffer-p))
     (let* ((node (treesit-node-at (point)))
            (parent-node (treesit-node-parent node))
            (parent-node-type (treesit-node-type parent-node)))
       (when (and (member (treesit-node-type node) '("identifier" ">" "<"))
-                 (member parent-node-type jtsx-jsx-ts-element-tag-keys))
+                 (member parent-node-type jtsx-jsx-ts-element-tag-keys)
+                 ;; Downstream syntax must be clean to prevent unexpected behaviours.
+                 ;; e.g.
+                 (not (jtsx-treesit-syntax-error-in-descendants-p parent-node))
+                 (not (jtsx-treesit-syntax-error-in-ancestors-p parent-node)))
         (let* ((element-node (treesit-node-parent parent-node))
                (opening-tag-node (treesit-node-child-by-field-name element-node "open_tag"))
                (closing-tag-node (treesit-node-child-by-field-name element-node "close_tag")))
@@ -380,6 +420,7 @@ Point can be in the opening or closing."
                                      closing-tag-name
                                    opening-tag-name)))
                   (jtsx-rename-jsx-element-tag-at-point tag-name tag-to-rename))))))))))
+
 (defun jtsx-first-child-jsx-node (node types &optional backward)
   "Find the first child of NODE matching one of the TYPES.
 If BACKWARD is not nil, start the search by the last children of NODE."
@@ -584,10 +625,6 @@ Step into sibling elements if possible."
   (interactive)
   (jtsx-move-jsx-element t t t))
 
-(defun jtsx-treesit-syntax-error-p ()
-  "Check if there are errors reported by treesit."
-  (jtsx-enclosing-jsx-node (treesit-node-at (point)) '("ERROR")))
-
 (defun jtsx-jsx-electric-closing-element (n)
   "Insert `>' and the associated closing tag (`</xxx>') if expected.
 N is a numeric prefix argument.  If greater than 1, insert N times `>', but
@@ -608,9 +645,9 @@ N is a numeric prefix argument.  If greater than 1, insert N times `>', but
             ;; We try to guess if auto adding the closing tag is expected or not.  We assume that
             ;; before inserting the new opening tag, the code syntax was clean. So if after adding
             ;; the new opening tag we detect a syntax issue, that means a closing tag is expected.
-            ;; This logic is quite basic, but no sure we can really do better with treesit
+            ;; This logic is quite basic, but not sure we can really do better with treesit
             ;; informations about syntax issues.
-            (when (jtsx-treesit-syntax-error-p)
+            (when (jtsx-treesit-syntax-error-in-ancestors-p node)
               (save-excursion (insert closing-tag)))))))))
 
 (defun jtsx-inside-empty-inline-jsx-element-p ()
@@ -860,6 +897,9 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
 
   ;; Add hook for electric new line
   (add-hook 'post-self-insert-hook #'jtsx-electric-open-newline-between-jsx-element-tags-psif nil t)
+
+  ;; Add hook to save the value of `jtsx-save-buffer-chars-modified-tick'
+  (add-hook 'pre-command-hook #'jtsx-save-buffer-chars-modified-tick nil t)
 
   ;; Add hook for automatic synchronization of jsx element tags.
   ;; `DEPTH' value explanation: some completion packages rely on `buffer-chars-modified-tick'

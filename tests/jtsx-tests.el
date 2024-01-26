@@ -481,7 +481,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (rename-jsx-element-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
 ;; TEST AUTOMATIC SYNCHRONIZATION OF JSX ELEMENT TAGS
-(ert-deftest jtsx-test-resynchronize-jsx-element-tags-from-opening ()
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-from-opening ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync t)
         (move-point #'(lambda () (goto-char 5)))
         (content "(<AB>Hello</A>);")
@@ -491,7 +491,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-resynchronize-jsx-element-tags-from-closing ()
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-from-closing ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync t)
         (move-point #'(lambda () (goto-char 14)))
         (content "(<AB>Hello</A>);")
@@ -501,7 +501,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-resynchronize-jsx-element-tags-from-empty-opening ()
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-from-empty-opening ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync t)
         (move-point #'(lambda () (goto-char 3)))
         (content "(<>Hello</A>);")
@@ -511,7 +511,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-resynchronize-jsx-element-tags-from-empty-closing ()
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-from-empty-closing ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync t)
         (move-point #'(lambda () (goto-char 12)))
         (content "(<A>Hello</>);")
@@ -521,7 +521,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-resynchronize-jsx-element-tags-from-opening-with-attribute ()
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-from-opening-with-attribute ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync t)
         (move-point #'(lambda () (goto-char 4)))
         (content "(<A show>Hello</>);")
@@ -531,7 +531,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-resynchronize-jsx-element-tags-from-closing-with-attribute ()
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-from-closing-with-attribute ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync t)
         (move-point #'(lambda () (goto-char 21)))
         (content "(<AB show>Hello</ABC>);")
@@ -541,7 +541,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-resynchronize-jsx-element-tags-from-empty-opening-with-attribute ()
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-from-empty-opening-with-attribute ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync t)
         (move-point #'(lambda () (goto-char 3)))
         (content "(< show>Hello</ABC>);")
@@ -551,7 +551,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-resynchronize-jsx-element-tags-from-empty-closing-with-attribute ()
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-from-empty-closing-with-attribute ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync t)
         (move-point #'(lambda () (goto-char 18)))
         (content "(<AB show>Hello</>);")
@@ -561,7 +561,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-resynchronize-jsx-element-tags-failed ()
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-failed ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync t)
         (move-point #'(lambda () (goto-char 7)))
         (content "(<AB>Hello</A>);")
@@ -571,11 +571,31 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-test-resynchronize-jsx-element-tags-disabled ()
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-disabled ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync nil)
         (move-point #'(lambda () (goto-char 5)))
         (content "(<AB>Hello</A>);")
         (result "(<AB>Hello</A>);"))
+    (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-when-created-new-element-aborted ()
+  (let ((jtsx-enable-jsx-element-tags-auto-sync t)
+        (move-point #'(lambda () (goto-char 15)))
+        (content "(\n  <A>    \n<B\n    <C>\n    </C>\n  </A>\n);")
+        (result "(\n  <A>    \n<B\n    <C>\n    </C>\n  </A>\n);"))
+    (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-when-created-new-element-aborted ()
+  (let ((jtsx-enable-jsx-element-tags-auto-sync t)
+        (move-point #'(lambda () (goto-char 15)))
+        (content "(\n  <A>    \n<B\n    <C>\n    </C>\n  </A>\n);")
+        (result "(\n  <A>    \n<B\n    <C>\n    </C>\n  </A>\n);"))
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-jsx-mode)
                    result))
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
