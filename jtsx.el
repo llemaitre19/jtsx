@@ -686,13 +686,14 @@ Member of `post-self-insert-hook'."
 Keys are `:start' and `:end'."
   (let* ((start-pos (min (point) (mark)))
          (end-pos (max (point) (mark)))
+         (skip-chars " \t\n\r")
          (trimmed-start-pos (save-excursion
                               (goto-char start-pos)
-                              (skip-chars-forward " \t\n")
+                              (skip-chars-forward skip-chars)
                               (point)))
          (trimmed-end-pos (save-excursion
                             (goto-char end-pos)
-                            (skip-chars-backward " \t\n")
+                            (skip-chars-backward skip-chars)
                             (point))))
     (if (< trimmed-start-pos trimmed-end-pos)
         `(:start ,trimmed-start-pos :end ,trimmed-end-pos)
@@ -741,13 +742,15 @@ ELEMENT-NAME is the name of the new wrapping element."
              (opening-line (line-number-at-pos start-pos))
              (closing-line (+ (line-number-at-pos end-pos)
                               (if inline-element 0 1))) ; +1 for insertion if not inline
-             (opening-tag (format "<%s>%s" element-name (if inline-element "" "\n")))
-             (closing-tag (format "</%s>%s" element-name (if inline-element "" "\n"))))
+             (opening-tag (format "<%s>" element-name))
+             (closing-tag (format "</%s>" element-name)))
         (save-excursion
           (if inline-element (goto-char end-pos) (jtsx-goto-line closing-line))
           (insert closing-tag)
+          (if (not inline-element) (newline))
           (if inline-element (goto-char start-pos) (jtsx-goto-line opening-line))
-          (insert opening-tag))
+          (insert opening-tag)
+          (if (not inline-element) (newline)))
         ;; Let the cursor ready to add attributes in the wrapping element
         (goto-char start-pos)
         (search-forward ">")
