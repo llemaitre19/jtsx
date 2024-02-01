@@ -130,11 +130,11 @@ See `treesit-font-lock-level' for more informations."
 
 (defvar jtsx-ts-indent-rules)
 
-(defvar jtsx-last-buffer-chars-modifed-tick 0)
+(defvar-local jtsx-last-buffer-chars-modifed-tick 0)
 
 (defun jtsx-save-buffer-chars-modified-tick ()
   "Save the returned value of `buffer-chars-modified-tick' function."
-  (setq jtsx-last-buffer-chars-modifed-tick (buffer-chars-modified-tick)))
+  (setq-local jtsx-last-buffer-chars-modifed-tick (buffer-chars-modified-tick)))
 
 (defun jtsx-command-modified-buffer-p ()
   "Check if last command has modified the buffer."
