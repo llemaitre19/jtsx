@@ -758,8 +758,8 @@ ELEMENT-NAME is the name of the new wrapping element."
         ;; Finally indent modified region
         (indent-region (save-excursion (jtsx-goto-line opening-line) (pos-bol))
                        (save-excursion (jtsx-goto-line (+ closing-line (if inline-element 0 1)))
-                                       (pos-eol)))))
-  (message "Not inside jsx context."))
+                                       (pos-eol))))
+    (message "Not inside jsx context.")))
 
 (defun jtsx-unwrap-jsx ()
   "Unwrap JSX nodes wrapped in the node at point."
