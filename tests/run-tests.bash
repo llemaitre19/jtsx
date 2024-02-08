@@ -4,7 +4,7 @@
 # It requires Nix (https://nixos.org/download)
 
 init_dir="/tmp/.emacs.d_jtsx_tests"
-emacs_versions=("emacs-29-1" "emacs-snapshot")
+emacs_versions=("emacs-29-1" "emacs-29-2" "emacs-snapshot")
 
 # Ensure that Emacs init dir is empty
 rm -rf $init_dir
