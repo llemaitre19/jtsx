@@ -551,6 +551,19 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
+(ert-deftest jtsx-test-synchronize-jsx-element-tags-from-empty-opening-with-string-attribute ()
+  "Known bug.
+In that situation, Tree-sitter parser is very confused with this syntax.  No workaround for now."
+  :expected-result :failed
+  (let ((jtsx-enable-jsx-element-tags-auto-sync t)
+        (move-point #'(lambda () (goto-char 3)))
+        (content "(< label=\"Name\">Hello</ABC>);")
+        (result "(< label=\"Name\">Hello</>);"))
+    (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (synchronize-jsx-element-tags-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
 (ert-deftest jtsx-test-synchronize-jsx-element-tags-from-empty-closing-with-attribute ()
   (let ((jtsx-enable-jsx-element-tags-auto-sync t)
         (move-point #'(lambda () (goto-char 18)))

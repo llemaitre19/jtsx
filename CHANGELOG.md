@@ -4,6 +4,7 @@
 
 ## 0.3.4 (2024-02-08)
 
+* Add automatic name synchronization of JSX element tags.
 * Add unwrap and delete features.
 * Fix jsx electric newline having side effects in none jtsx buffers.
 

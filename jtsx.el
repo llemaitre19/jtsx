@@ -6,7 +6,7 @@
 ;; Maintainer: Loïc Lemaître <loic.lemaitre@gmail.com>
 ;; URL: https://github.com/llemaitre19/jtsx
 ;; Package-Requires: ((emacs "29.1"))
-;; Version: 0.3.4
+;; Version: 0.4.0
 ;; Keywords: languages
 
 ;; This file is NOT part of GNU Emacs.
@@ -94,7 +94,7 @@ continuated expression."
   :group 'jtsx)
 
 (defcustom jtsx-enable-jsx-element-tags-auto-sync nil
-  "Enable jsx element tags automatic synchronization."
+  "Enable jsx automatic synchronization of element opening and closing tag name."
   :type 'boolean
   :safe 'booleanp
   :group 'jtsx)
@@ -384,15 +384,19 @@ Point can be in the opening or closing."
                   (1- (treesit-node-start identifier-node)))))))
 
 (defun jtsx-synchronize-jsx-element-tags ()
-  "Synchronize jsx element tags depending on the cursor position."
+  "Synchronize jsx element tags depending on the cursor position.
+
+Under some circumtances, the synchronization can fail.  Right after editing a
+ tag name and before synchronization, the code is syntactically wrong, thus the
+ tree-sitter parser can be lost.  For example in that situation, where `A' has
+ just been erased form the opening tag: < attribute=\"text\"></A>."
   (when (and jtsx-enable-jsx-element-tags-auto-sync (jtsx-command-modified-buffer-p))
     (let* ((node (treesit-node-at (point)))
            (parent-node (treesit-node-parent node))
            (parent-node-type (treesit-node-type parent-node)))
       (when (and (member (treesit-node-type node) '("identifier" ">" "<"))
-                 (member parent-node-type jtsx-jsx-ts-element-tag-keys)
-                 ;; Downstream syntax must be clean to prevent unexpected behaviours.
-                 ;; e.g.
+                 (member parent-node-type `(,@jtsx-jsx-ts-element-tag-keys "ERROR"))
+                 ;; Syntax must be clean to prevent unexpected behaviours.
                  (not (jtsx-treesit-syntax-error-in-descendants-p parent-node))
                  (not (jtsx-treesit-syntax-error-in-ancestors-p parent-node)))
         (let* ((element-node (treesit-node-parent parent-node))

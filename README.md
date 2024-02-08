@@ -68,6 +68,7 @@ Here an example of configuration using [use-package](https://github.com/jwiegley
   ;; (jtsx-jsx-element-move-allow-step-out t)
   ;; (jtsx-enable-jsx-electric-closing-element t)
   ;; (jtsx-enable-electric-open-newline-between-jsx-element-tags t)
+  ;; (jtsx-enable-jsx-element-tags-auto-sync nil)
   ;; (jtsx-enable-all-syntax-highlighting-features t)
   :config
   (defun jtsx-bind-keys-to-mode-map (mode-map)
@@ -111,6 +112,10 @@ Here an example of configuration using [use-package](https://github.com/jwiegley
 `M-x jtsx-rename-jsx-element` renames both the opening and closing tags of a `JSX` element. Cursor must either be inside the opening or the closing tag.
 
 ![Rename element](./examples/rename-element.gif)
+
+As an alternative, you can turn `jtsx-enable-jsx-element-tags-auto-sync` to `t` to enable automatic name synchronization of `JSX` element tags. As soon as the name of an opening or a closing tag is edited, its paired tag is immediately synchronized.
+
+![Auto sync element tags](./examples/auto-sync-tags.gif)
 
 ### Moving JSX elements
 
@@ -199,6 +204,7 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 | `jtsx-jsx-element-move-allow-step-out`                       | `t`     | Allow to step out when moving a jsx element.                                                                                                                                                                                                            |
 | `jtsx-enable-jsx-electric-closing-element`                   | `t`     | Enable electric JSX closing element feature.                                                                                                                                                                                                            |
 | `jtsx-enable-electric-open-newline-between-jsx-element-tags` | `t`     | Enable electric new line between jsx element tags                                                                                                                                                                                                       |
+| `jtsx-enable-jsx-element-tags-auto-sync`                     | `nil`   | Enable automatic name synchronization of jsx element opening and closing tags.                                                                                                                                                                          |
 | `jtsx-enable-all-syntax-highlighting-features`               | `t`     | Enable all available syntax highlighting features.                                                                                                                                                                                                      |
 
 ## FAQ
