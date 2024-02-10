@@ -2,6 +2,10 @@
 
 # Changelog
 
+## 0.3.5 (2024-02-09)
+
+* Fix font lock issue due to a breaking change in treesit grammars.
+
 ## 0.3.4 (2024-02-08)
 
 * Add automatic name synchronization of JSX element tags.
