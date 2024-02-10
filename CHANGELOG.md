@@ -2,7 +2,7 @@
 
 # Changelog
 
-## 0.3.5 (2024-02-09)
+## 0.3.5 (2024-02-10)
 
 * Fix font lock issue due to a breaking change in treesit grammars.
 
