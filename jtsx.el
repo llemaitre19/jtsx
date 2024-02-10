@@ -926,9 +926,11 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
                        jtsx-hs-find-block-beginning)))
 
 (defun jtsx-font-lock-compatibility-function-expression (ts-lang-key)
-  "TS-LANG-KEY.
-Starting from version 0.20.2 of the javascript grammar and version 0.20.4
- of the typescript/tsx grammar, `function' becomes `function_expression'."
+  "Handle tree-sitter grammar breaking change for `function' expression.
+
+TS-LANG-KEY can be `javascript', `typescript' or `tsx'.  Starting from
+version 0.20.2 of the javascript grammar and version 0.20.4 of the
+typescript/tsx grammar, `function' becomes `function_expression'."
   (condition-case nil
       (progn (treesit-query-capture ts-lang-key '((function_expression) @cap))
              ;; New version of the grammar
