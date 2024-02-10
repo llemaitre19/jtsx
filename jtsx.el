@@ -6,7 +6,7 @@
 ;; Maintainer: Loïc Lemaître <loic.lemaitre@gmail.com>
 ;; URL: https://github.com/llemaitre19/jtsx
 ;; Package-Requires: ((emacs "29.1"))
-;; Version: 0.3.4
+;; Version: 0.3.5
 ;; Keywords: languages
 
 ;; This file is NOT part of GNU Emacs.
@@ -815,6 +815,360 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
   ;; Apply treesit customization
   (treesit-major-mode-setup))
 
+(defun jtsx-font-lock-compatibility-function-expression (ts-lang-key)
+  "TS-LANG-KEY.
+Starting from version 0.20.2 of the javascript grammar and version 0.20.4
+ of the typescript/tsx grammar, `function' becomes `function_expression'."
+  (condition-case nil
+      (progn (treesit-query-capture ts-lang-key '((function_expression) @cap))
+             ;; New version of the grammar
+             'function_expression)
+    (treesit-query-error
+    ;; Old version of the grammar
+    'function)))
+
+;; Hard code javascript font lock settings to back port some fixes into Emacs 29.1 and 29.2.
+;; Should not be used for later versions.
+(defun jtsx-jsx-mode-font-lock-settings ()
+  "Tree-sitter font-lock settings for javascript."
+  (let ((func-exp (jtsx-font-lock-compatibility-function-expression 'javascript)))
+    (treesit-font-lock-rules
+     :language 'javascript
+     :feature 'comment
+     '([(comment) (hash_bang_line)] @font-lock-comment-face)
+
+     :language 'javascript
+     :feature 'constant
+     '(((identifier) @font-lock-constant-face
+        (:match "\\`[A-Z_][0-9A-Z_]*\\'" @font-lock-constant-face))
+
+       [(true) (false) (null)] @font-lock-constant-face)
+
+     :language 'javascript
+     :feature 'keyword
+     `([,@js--treesit-keywords] @font-lock-keyword-face
+       [(this) (super)] @font-lock-keyword-face)
+
+     :language 'javascript
+     :feature 'string
+     '((regex pattern: (regex_pattern)) @font-lock-regexp-face
+       (string) @font-lock-string-face)
+
+     :language 'javascript
+     :feature 'string-interpolation
+     :override t
+     '((template_string) @js--fontify-template-string
+       (template_substitution ["${" "}"] @font-lock-misc-punctuation-face))
+
+     :language 'javascript
+     :feature 'definition
+     `((,func-exp
+        name: (identifier) @font-lock-function-name-face)
+
+       (class_declaration
+        name: (identifier) @font-lock-type-face)
+
+       (function_declaration
+        name: (identifier) @font-lock-function-name-face)
+
+       (method_definition
+        name: (property_identifier) @font-lock-function-name-face)
+
+       (formal_parameters
+        [(identifier) @font-lock-variable-name-face
+         (array_pattern (identifier) @font-lock-variable-name-face)
+         (object_pattern (shorthand_property_identifier_pattern) @font-lock-variable-name-face)])
+
+       (variable_declarator
+        name: (identifier) @font-lock-variable-name-face)
+
+       (variable_declarator
+        name: (identifier) @font-lock-function-name-face
+        value: [(,func-exp) (arrow_function)])
+
+       (variable_declarator
+        name: [(array_pattern (identifier) @font-lock-variable-name-face)
+               (object_pattern
+                (shorthand_property_identifier_pattern) @font-lock-variable-name-face)])
+
+       ;; full module imports
+       (import_clause (identifier) @font-lock-variable-name-face)
+       ;; named imports with aliasing
+       (import_clause (named_imports (import_specifier
+                                      alias: (identifier) @font-lock-variable-name-face)))
+       ;; named imports without aliasing
+       (import_clause (named_imports (import_specifier
+                                      !alias
+                                      name: (identifier) @font-lock-variable-name-face)))
+
+       ;; full namespace import (* as alias)
+       (import_clause (namespace_import (identifier) @font-lock-variable-name-face)))
+
+     :language 'javascript
+     :feature 'assignment
+     '((assignment_expression
+        left: (_) @js--treesit-fontify-assignment-lhs))
+
+     :language 'javascript
+     :feature 'function
+     '((call_expression
+        function: [(identifier) @font-lock-function-call-face
+                   (member_expression
+                    property:
+                    (property_identifier) @font-lock-function-call-face)]))
+
+     :language 'javascript
+     :feature 'jsx
+     '((jsx_opening_element name: (_) @font-lock-function-call-face)
+       (jsx_closing_element name: (_) @font-lock-function-call-face)
+       (jsx_self_closing_element name: (_) @font-lock-function-call-face)
+       (jsx_attribute (property_identifier) @font-lock-constant-face))
+
+     :language 'javascript
+     :feature 'property
+     '(((property_identifier) @font-lock-property-use-face)
+       (pair value: (identifier) @font-lock-variable-use-face)
+       ((shorthand_property_identifier) @font-lock-property-use-face))
+
+     :language 'javascript
+     :feature 'number
+     '((number) @font-lock-number-face
+       ((identifier) @font-lock-number-face
+        (:match "\\`\\(?:NaN\\|Infinity\\)\\'" @font-lock-number-face)))
+
+     :language 'javascript
+     :feature 'operator
+     `([,@js--treesit-operators] @font-lock-operator-face
+       (ternary_expression ["?" ":"] @font-lock-operator-face))
+
+     :language 'javascript
+     :feature 'bracket
+     '((["(" ")" "[" "]" "{" "}"]) @font-lock-bracket-face)
+
+     :language 'javascript
+     :feature 'delimiter
+     '((["," "." ";" ":"]) @font-lock-delimiter-face)
+
+     :language 'javascript
+     :feature 'escape-sequence
+     :override t
+     '((escape_sequence) @font-lock-escape-face))))
+
+(defun jtsx-tsx-mode-font-lock-compatibility-bb1f97b (language)
+  "Font lock rules helper, to handle different releases of tree-sitter-tsx.
+Check if a node type is available, then return the right font lock rules.
+Argument LANGUAGE is either `typescript' or `tsx'."
+  ;; handle commit bb1f97b
+  ;; Warning: treesitter-query-capture says both node types are valid,
+  ;; but then raises an error if the wrong node type is used. So it is
+  ;; important to check with the new node type (member_expression)
+  (condition-case nil
+      (progn (treesit-query-capture language '((jsx_opening_element (member_expression) @capture)))
+             '((jsx_opening_element
+                [(member_expression (identifier)) (identifier)]
+                @typescript-ts-jsx-tag-face)
+
+               (jsx_closing_element
+                [(member_expression (identifier)) (identifier)]
+                @typescript-ts-jsx-tag-face)
+
+               (jsx_self_closing_element
+                [(member_expression (identifier)) (identifier)]
+                @typescript-ts-jsx-tag-face)))
+    (treesit-query-error
+     '((jsx_opening_element
+        [(nested_identifier (identifier)) (identifier)]
+        @typescript-ts-jsx-tag-face)
+
+       (jsx_closing_element
+        [(nested_identifier (identifier)) (identifier)]
+        @typescript-ts-jsx-tag-face)
+
+       (jsx_self_closing_element
+        [(nested_identifier (identifier)) (identifier)]
+        @typescript-ts-jsx-tag-face)))))
+
+;; Hard code typescript/tsx font lock settings to back port some fixes into Emacs 29.1 and 29.2.
+;; Should not be used for later versions.
+(defun jtsx-tsx-mode-font-lock-settings (language)
+  "Tree-sitter font-lock settings.
+Argument LANGUAGE is either `typescript' or `tsx'."
+  (let ((func-exp (jtsx-font-lock-compatibility-function-expression language)))
+    (treesit-font-lock-rules
+     :language language
+     :feature 'comment
+     `([(comment) (hash_bang_line)] @font-lock-comment-face)
+
+     :language language
+     :feature 'constant
+     `(((identifier) @font-lock-constant-face
+        (:match "\\`[A-Z_][0-9A-Z_]*\\'" @font-lock-constant-face))
+       [(true) (false) (null)] @font-lock-constant-face)
+
+     :language language
+     :feature 'keyword
+     `([,@typescript-ts-mode--keywords] @font-lock-keyword-face
+       [(this) (super)] @font-lock-keyword-face)
+
+     :language language
+     :feature 'string
+     `((regex pattern: (regex_pattern)) @font-lock-regexp-face
+       (string) @font-lock-string-face
+       (template_string) @js--fontify-template-string
+       (template_substitution ["${" "}"] @font-lock-misc-punctuation-face))
+
+     :language language
+     :override t ;; for functions assigned to variables
+     :feature 'declaration
+     `((,func-exp
+        name: (identifier) @font-lock-function-name-face)
+       (function_declaration
+        name: (identifier) @font-lock-function-name-face)
+       (function_signature
+        name: (identifier) @font-lock-function-name-face)
+
+       (method_definition
+        name: (property_identifier) @font-lock-function-name-face)
+       (method_signature
+        name: (property_identifier) @font-lock-function-name-face)
+       (required_parameter (identifier) @font-lock-variable-name-face)
+       (optional_parameter (identifier) @font-lock-variable-name-face)
+
+       (variable_declarator
+        name: (identifier) @font-lock-function-name-face
+        value: [(,func-exp) (arrow_function)])
+
+       (variable_declarator
+        name: (identifier) @font-lock-variable-name-face)
+
+       (enum_declaration (identifier) @font-lock-type-face)
+
+       (extends_clause value: (identifier) @font-lock-type-face)
+       ;; extends React.Component<T>
+       (extends_clause value: (member_expression
+                               object: (identifier) @font-lock-type-face
+                               property: (property_identifier) @font-lock-type-face))
+
+       (arrow_function
+        parameter: (identifier) @font-lock-variable-name-face)
+
+       (variable_declarator
+        name: (array_pattern
+               (identifier)
+               (identifier) @font-lock-function-name-face)
+        value: (array (number) (,func-exp)))
+
+       (catch_clause
+        parameter: (identifier) @font-lock-variable-name-face)
+
+       ;; full module imports
+       (import_clause (identifier) @font-lock-variable-name-face)
+       ;; named imports with aliasing
+       (import_clause (named_imports (import_specifier
+                                      alias: (identifier) @font-lock-variable-name-face)))
+       ;; named imports without aliasing
+       (import_clause (named_imports (import_specifier
+                                      !alias
+                                      name: (identifier) @font-lock-variable-name-face)))
+
+       ;; full namespace import (* as alias)
+       (import_clause (namespace_import (identifier) @font-lock-variable-name-face)))
+
+     :language language
+     :feature 'identifier
+     `((nested_type_identifier
+        module: (identifier) @font-lock-type-face)
+
+       (type_identifier) @font-lock-type-face
+
+       (predefined_type) @font-lock-type-face
+
+       (new_expression
+        constructor: (identifier) @font-lock-type-face)
+
+       (enum_body (property_identifier) @font-lock-type-face)
+
+       (enum_assignment name: (property_identifier) @font-lock-type-face)
+
+       (variable_declarator
+        name: (identifier) @font-lock-variable-name-face)
+
+       (for_in_statement
+        left: (identifier) @font-lock-variable-name-face)
+
+       (arrow_function
+        parameters:
+        [(_ (identifier) @font-lock-variable-name-face)
+         (_ (_ (identifier) @font-lock-variable-name-face))
+         (_ (_ (_ (identifier) @font-lock-variable-name-face)))]))
+
+     :language language
+     :feature 'property
+     `((property_signature
+        name: (property_identifier) @font-lock-property-name-face)
+       (public_field_definition
+        name: (property_identifier) @font-lock-property-name-face)
+
+       (pair key: (property_identifier) @font-lock-property-use-face)
+
+       ((shorthand_property_identifier) @font-lock-property-use-face))
+
+     :language language
+     :feature 'expression
+     `((assignment_expression
+        left: [(identifier) @font-lock-function-name-face
+               (member_expression
+                property: (property_identifier) @font-lock-function-name-face)]
+        right: [(,func-exp) (arrow_function)]))
+
+     :language language
+     :feature 'function
+     '((call_expression
+        function:
+        [(identifier) @font-lock-function-call-face
+         (member_expression
+          property: (property_identifier) @font-lock-function-call-face)]))
+
+     :language language
+     :feature 'pattern
+     `((pair_pattern
+        key: (property_identifier) @font-lock-property-use-face
+        value: [(identifier) @font-lock-variable-name-face
+                (assignment_pattern left: (identifier) @font-lock-variable-name-face)])
+
+       (array_pattern (identifier) @font-lock-variable-name-face)
+
+       ((shorthand_property_identifier_pattern) @font-lock-variable-name-face))
+
+     :language language
+     :feature 'jsx
+     (append (jtsx-tsx-mode-font-lock-compatibility-bb1f97b language)
+             `((jsx_attribute (property_identifier) @typescript-ts-jsx-attribute-face)))
+
+     :language language
+     :feature 'number
+     `((number) @font-lock-number-face
+       ((identifier) @font-lock-number-face
+        (:match "\\`\\(?:NaN\\|Infinity\\)\\'" @font-lock-number-face)))
+
+     :language language
+     :feature 'operator
+     `([,@typescript-ts-mode--operators] @font-lock-operator-face
+       (ternary_expression ["?" ":"] @font-lock-operator-face))
+
+     :language language
+     :feature 'bracket
+     '((["(" ")" "[" "]" "{" "}"]) @font-lock-bracket-face)
+
+     :language language
+     :feature 'delimiter
+     '((["," "." ";" ":"]) @font-lock-delimiter-face)
+
+     :language language
+     :feature 'escape-sequence
+     :override t
+     '((escape_sequence) @font-lock-escape-face))))
+
 (defun jtsx-prioritize-mode-if-present (mode)
   "Prioritize MODE entries in `auto-mode-alist'."
   (let ((entries-to-prioritize (seq-remove (lambda (entry) (not (eq mode (cdr entry))))
@@ -870,16 +1224,12 @@ WHEN indicates when the mode starts to be obsolete."
         ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=65134)
         (jtsx-ts-remove-indent-rule ts-lang-key '(js-jsx--treesit-indent-compatibility-bb1f97b))
         (mapc (lambda (rule) (jtsx-ts-add-indent-rule 'javascript rule))
-              (js-jsx--treesit-indent-compatibility-bb1f97b))
-        ;; Fix font lock bug when treesit-font-lock-level is equal to 4: property conflicts with jsx
-        ;; attribute font lock rule.
+              (js-jsx--treesit-indent-compatibility-bb1f97b)))
+      (when (version<= emacs-version "29.2")
+        ;; Fix some font lock bugs
         ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=67684)
-        (setq-local treesit-font-lock-feature-list
-                    ;; Let the 3 first levels unchanged
-                    `(,@(cl-subseq treesit-font-lock-feature-list 0 3)
-                      ;; Remove "property" in the 4th level
-                      ,(seq-filter (lambda (feat) (not (eq feat 'property)))
-                                   (nth 3 treesit-font-lock-feature-list)))))
+        ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=68879)
+        (setq-local treesit-font-lock-settings (jtsx-jsx-mode-font-lock-settings)))
       (jtsx-configure-mode-base 'jtsx-jsx-mode jtsx-jsx-mode-map ts-lang-key 'js-indent-level))))
 
 ;; Keep old jsx-mode for backward compatibility but mark it as obsolete.
@@ -897,6 +1247,12 @@ WHEN indicates when the mode starts to be obsolete."
       (jtsx-ts-remove-indent-rule ts-lang-key  '((or (node-is "case")
                                                      (node-is "default"))
                                                  parent-bol typescript-ts-mode-indent-offset))
+      (when (version<= emacs-version "29.2")
+        ;; Fix a font lock bug
+        ;; TODO: send patch to Emacs devel
+        ;; (similar to https://debbugs.gnu.org/cgi/bugreport.cgi?bug=68879)
+        (setq-local treesit-font-lock-settings
+                    (jtsx-tsx-mode-font-lock-settings ts-lang-key)))
       (jtsx-configure-mode-base 'jtsx-tsx-mode jtsx-tsx-mode-map ts-lang-key
                                 'typescript-ts-mode-indent-offset))))
 
