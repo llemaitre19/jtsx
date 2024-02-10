@@ -10,7 +10,7 @@
 
 `jtsx` is an Emacs package for editing `JSX` or `TSX` files. It provides `jtsx-jsx-mode` and `jtsx-tsx-mode` major modes implemented respectively on top of `js-ts-mode` and `tsx-ts-mode`, benefiting thus from the new built-in [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) feature.
 
-Summary of features and fixes:
+Summary of features:
 
 * Commenting/uncommenting JSX code
 * Refactoring: moving, wrapping/unwrapping, deleting, renaming `JSX` elements
