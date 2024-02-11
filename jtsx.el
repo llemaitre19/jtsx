@@ -1361,8 +1361,7 @@ WHEN indicates when the mode starts to be obsolete."
                                                  parent-bol typescript-ts-mode-indent-offset))
       (when (version<= emacs-version "29.2")
         ;; Fix a font lock bug
-        ;; TODO: send patch to Emacs devel
-        ;; (similar to https://debbugs.gnu.org/cgi/bugreport.cgi?bug=68879)
+        ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=69024)
         (setq-local treesit-font-lock-settings
                     (jtsx-tsx-mode-font-lock-settings ts-lang-key)))
       (jtsx-configure-mode-base 'jtsx-tsx-mode jtsx-tsx-mode-map ts-lang-key
