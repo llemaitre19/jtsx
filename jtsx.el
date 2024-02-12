@@ -1,4 +1,4 @@
-;;; jtsx.el --- Extends default support for JSX/TSX -*- lexical-binding: t -*-
+;;; jtsx.el --- Extends JSX/TSX built-in support -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2023 Loïc Lemaître
 
