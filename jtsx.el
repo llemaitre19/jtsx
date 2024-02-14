@@ -939,6 +939,7 @@ typescript/tsx grammar, `function' becomes `function_expression'."
     ;; Old version of the grammar
     'function)))
 
+;; Modified copy from lisp/progmodes/js.el of Emacs sources.
 ;; Hard code javascript font lock settings to back port some fixes into Emacs 29.1 and 29.2.
 ;; Should not be used for later versions.
 (defun jtsx-jsx-mode-font-lock-settings ()
@@ -1066,6 +1067,7 @@ typescript/tsx grammar, `function' becomes `function_expression'."
      :override t
      '((escape_sequence) @font-lock-escape-face))))
 
+;; Copy from lisp/progmodes/typescript-ts-mode.el of Emacs sources.
 (defun jtsx-tsx-mode-font-lock-compatibility-bb1f97b (language)
   "Font lock rules helper, to handle different releases of tree-sitter-tsx.
 Check if a node type is available, then return the right font lock rules.
@@ -1100,6 +1102,7 @@ Argument LANGUAGE is either `typescript' or `tsx'."
         [(nested_identifier (identifier)) (identifier)]
         @typescript-ts-jsx-tag-face)))))
 
+;; Modified copy from lisp/progmodes/typescript-ts-mode.el of Emacs sources.
 ;; Hard code typescript/tsx font lock settings to back port some fixes into Emacs 29.1 and 29.2.
 ;; Should not be used for later versions.
 (defun jtsx-tsx-mode-font-lock-settings (language)
