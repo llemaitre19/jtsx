@@ -4,6 +4,7 @@
 
 ## Master
 
+* Add `jtsx-typescript-mode` based on `typescript-ts-mode` for pure `TS` files.
 * Fix wrong cursor position after wrapping.
 
 ## 0.4.0 (2024-03-01)

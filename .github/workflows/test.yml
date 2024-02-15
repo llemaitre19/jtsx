@@ -20,11 +20,14 @@ jobs:
     - name: Check out the source code
       uses: actions/checkout@v4
 
-    - name: Install treesit javascript language
+    - name: Install treesit Javascript language
       run: emacs --batch -l jtsx.el --eval "(jtsx-install-treesit-language 'javascript)"
 
-    - name: Install treesit Typescript language
+    - name: Install treesit TSX language
       run: emacs --batch -l jtsx.el --eval "(jtsx-install-treesit-language 'tsx)"
+
+    - name: Install treesit Typescript language
+      run: emacs --batch -l jtsx.el --eval "(jtsx-install-treesit-language 'typescript)"
 
     - name: Run package lint check
       run: |

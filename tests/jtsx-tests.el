@@ -293,33 +293,37 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (comment-dwim-into-buffer content set-point #'jtsx-tsx-mode) result))))
 
 ;; TEST INDENTATION
-(ert-deftest jtsx-test-no-indent-jsx-switch-case ()
+(ert-deftest jtsx-test-no-indent-switch-case ()
   (let ((jtsx-switch-indent-offset 0)
         (content "switch (x) {\ncase true:\nbreak;\ndefault:\nbreak;\n};")
         (result "switch (x) {\ncase true:\n  break;\ndefault:\n  break;\n};"))
     (should (equal (indent-all-into-buffer content #'jtsx-jsx-mode) result))
-    (should (equal (indent-all-into-buffer content #'jtsx-tsx-mode) result))))
+    (should (equal (indent-all-into-buffer content #'jtsx-tsx-mode) result))
+    (should (equal (indent-all-into-buffer content #'jtsx-typescript-mode) result))))
 
-(ert-deftest jtsx-test-indent-jsx-switch-case ()
+(ert-deftest jtsx-test-indent-switch-case ()
   (let ((jtsx-switch-indent-offset indent-offset)
         (content "switch (x) {\ncase true:\nbreak;\ndefault:\nbreak;\n};")
         (result "switch (x) {\n  case true:\n    break;\n  default:\n    break;\n};"))
     (should (equal (indent-all-into-buffer content #'jtsx-jsx-mode) result))
-    (should (equal (indent-all-into-buffer content #'jtsx-tsx-mode) result))))
+    (should (equal (indent-all-into-buffer content #'jtsx-tsx-mode) result))
+    (should (equal (indent-all-into-buffer content #'jtsx-typescript-mode) result))))
 
 (ert-deftest jtsx-test-indent-statement-block-regarding-parent ()
   (let ((jtsx-indent-statement-block-regarding-standalone-parent nil)
         (content "function test(a,\nb) {\nreturn a + b;\n}")
         (result "function test(a,\n  b) {\n    return a + b;\n  }"))
     (should (equal (indent-all-into-buffer content #'jtsx-jsx-mode) result))
-    (should (equal (indent-all-into-buffer content #'jtsx-tsx-mode) result))))
+    (should (equal (indent-all-into-buffer content #'jtsx-tsx-mode) result))
+    (should (equal (indent-all-into-buffer content #'jtsx-typescript-mode) result))))
 
 (ert-deftest jtsx-test-indent-statement-block-regarding-standalone-parent ()
   (let ((jtsx-indent-statement-block-regarding-standalone-parent t)
         (content "function test(a,\nb) {\nreturn a + b;\n}")
         (result "function test(a,\n  b) {\n  return a + b;\n}"))
     (should (equal (indent-all-into-buffer content #'jtsx-jsx-mode) result))
-    (should (equal (indent-all-into-buffer content #'jtsx-tsx-mode) result))))
+    (should (equal (indent-all-into-buffer content #'jtsx-tsx-mode) result))
+    (should (equal (indent-all-into-buffer content #'jtsx-typescript-mode) result))))
 
 ;; TEST JUMPS
 (ert-deftest jtsx-test-jump-opening-element-starting-from-closing ()

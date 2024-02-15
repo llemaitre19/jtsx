@@ -31,6 +31,7 @@ for version in ${emacs_versions[@]}; do
     if ! $emacs_nix --init-directory=$init_dir --batch -l ert -l ../jtsx.el -l jtsx-tests.el \
          --eval "(jtsx-install-treesit-language 'javascript)" \
          --eval "(jtsx-install-treesit-language 'tsx)" \
+         --eval "(jtsx-install-treesit-language 'typescript)" \
          -f ert-run-tests-batch-and-exit; then
         printf "TESTS FAILURE ON '%s'.\n" $version
         exit

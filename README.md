@@ -19,7 +19,7 @@ Summary of features:
 * Code folding
 * Some additional indentation options
 
-Note that `jtsx-jsx-mode` and `jtsx-tsx-mode` work as well respectively for standart `JS` and `TS` files.
+Note that while `jtsx-jsx-mode` is fully compatible with pure `JS` files, `jtsx-tsx-mode` has some rare conflicts with `TS` files (e.g. type assertions). It is thus recommanded to use `jtsx-typescript-mode` (based on `typescript-ts-mode`) for plain `TS` files.
 
 ## Requirements
 
@@ -46,9 +46,10 @@ For more advanced usages, see `M-x treesit-install-language-grammar` command, or
 Here an example of configuration using [use-package](https://github.com/jwiegley/use-package), to put in the `Emacs` `init.el`:
 
 * attach `jtsx-jsx-mode` to `JSX` and `JS` files
-* attach `jtsx-tsx-mode` to `TSX` and `TS` files
+* attach `jtsx-tsx-mode` to `TSX` files
+* attach `jtsx-typescript-mode` to `TS` files
 * bind `jtsx` functions to the same shortcuts for `jtsx-jsx-mode` and `jtsx-tsx-mode`
-* set indention offsets for `JSX` and `TSX` modes (use base mode variables)
+* set indention offsets for `JSX`/`JS` and `TSX`/`TS` modes (use base mode variables)
 * customize `jtsx` behaviour through provided variables
 * enable `hideshow` minor mode for code folding
 
@@ -56,10 +57,12 @@ Here an example of configuration using [use-package](https://github.com/jwiegley
 (use-package jtsx
   :ensure t
   :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
-         ("\\.tsx?\\'" . jtsx-tsx-mode))
+         ("\\.tsx\\'" . jtsx-tsx-mode)
+         ("\\.ts\\'" . jtsx-typescript-mode))
   :commands jtsx-install-treesit-language
   :hook ((jtsx-jsx-mode . hs-minor-mode)
-         (jtsx-tsx-mode . hs-minor-mode))
+         (jtsx-tsx-mode . hs-minor-mode)
+         (jtsx-typescript-mode . hs-minor-mode))
   :custom
   ;; Optional customizations
   ;; (js-indent-level 2)
