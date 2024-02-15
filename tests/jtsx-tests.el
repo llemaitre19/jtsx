@@ -166,6 +166,15 @@ ELEMENT-NAME is the name of the wrapping element."
   (let ((command (lambda () (jtsx-wrap-in-jsx-element (or element-name "W")))))
     (do-command-into-buffer-ret-content initial-content customize command mode)))
 
+(defun wrap-in-jsx-element-into-buffer-position (initial-content customize
+                                                                 &optional mode element-name)
+  "Return point of a temp buffer after wrapping some JSX with JSX element.
+Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
+Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode.
+ELEMENT-NAME is the name of the wrapping element."
+  (let ((command (lambda () (jtsx-wrap-in-jsx-element (or element-name "W")))))
+    (do-command-into-buffer-ret-position initial-content customize command mode)))
+
 (defun unwrap-jsx-into-buffer (initial-content customize &optional mode)
   "Return the content of a temp buffer after unwrapping some JSX at point.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
@@ -1272,6 +1281,24 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
         (result "(<><W><A /></W></>);"))
     (should (equal (wrap-in-jsx-element-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (wrap-in-jsx-element-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-wrap-element-cursor-ready-to-add-attributes ()
+  (let ((move-point #'(lambda () (goto-char 15)))
+        (content "(\n  <>\n    <ABC />\n  </>\n);")
+        (result 14))
+    (should (equal (wrap-in-jsx-element-into-buffer-position content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (wrap-in-jsx-element-into-buffer-position content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-wrap-inline-element-curso-ready-to-add-attributes ()
+  (let ((move-point #'(lambda () (goto-char 7)))
+        (content "(<><ABC /></>);")
+        (result 6))
+    (should (equal (wrap-in-jsx-element-into-buffer-position content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (wrap-in-jsx-element-into-buffer-position content move-point #'jtsx-tsx-mode)
+                   result))))
 
 ;; TEST UNWRAP JSX
 (ert-deftest jtsx-test-unwrap ()

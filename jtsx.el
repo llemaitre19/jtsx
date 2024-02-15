@@ -742,6 +742,7 @@ ELEMENT-NAME is the name of the new wrapping element."
       (let* ((region-to-wrap (jtsx-region-to-wrap))
              (start-pos (plist-get region-to-wrap :start))
              (end-pos (plist-get region-to-wrap :end))
+             (new-cursor-pos nil)
              (inline-element (jtsx-inline-content-p start-pos end-pos))
              (opening-line (line-number-at-pos start-pos))
              (closing-line (+ (line-number-at-pos end-pos)
@@ -754,11 +755,10 @@ ELEMENT-NAME is the name of the new wrapping element."
           (if (not inline-element) (newline))
           (if inline-element (goto-char start-pos) (jtsx-goto-line opening-line))
           (insert opening-tag)
+          (setq new-cursor-pos (1- (point)))
           (if (not inline-element) (newline)))
         ;; Let the cursor ready to add attributes in the wrapping element
-        (goto-char start-pos)
-        (search-forward ">")
-        (backward-char 1)
+        (goto-char new-cursor-pos)
         ;; Finally indent modified region
         (indent-region (save-excursion (jtsx-goto-line opening-line) (pos-bol))
                        (save-excursion (jtsx-goto-line (+ closing-line (if inline-element 0 1)))
