@@ -2,6 +2,10 @@
 
 # Changelog
 
+## Master
+
+* Fix wrong cursor position after wrapping.
+
 ## 0.4.0 (2024-03-01)
 
 * Add automatic name synchronization of JSX element tags.
