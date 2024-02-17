@@ -1078,6 +1078,26 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (add-electric-closing-element-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
 
+(ert-deftest jtsx-test-add-electric-closing-element-root-jsx-node ()
+  (let ((jtsx-enable-jsx-electric-closing-element t)
+        (move-point #'(lambda () (goto-char 6)))
+        (content "(\n  <\n);")
+        (result "(\n  <></>\n);"))
+    (should (equal (add-electric-closing-element-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (add-electric-closing-element-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-add-electric-closing-element-inline-root-jsx-node ()
+  (let ((jtsx-enable-jsx-electric-closing-element t)
+        (move-point #'(lambda () (goto-char 3)))
+        (content "(<);")
+        (result "(<></>);"))
+    (should (equal (add-electric-closing-element-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (add-electric-closing-element-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
 ;; TEST ELECTRIC NEW LINE
 (ert-deftest jtsx-test-electric-newline-into-inline-element ()
   (let ((jtsx-enable-electric-open-newline-between-jsx-element-tags t)

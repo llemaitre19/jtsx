@@ -635,7 +635,8 @@ N is a numeric prefix argument.  If greater than 1, insert N times `>', but
  never insert closing tag."
   (interactive "p")
   (insert-char (char-from-name "GREATER-THAN SIGN") n t)
-  (when (and (= n 1) jtsx-enable-jsx-electric-closing-element (jtsx-jsx-context-p))
+  ;; Check jsx context inside the tag
+  (when (and (= n 1) jtsx-enable-jsx-electric-closing-element (jtsx-jsx-context-at-p (1- (point))))
     (when-let ((node (treesit-node-at (1- (point))))) ; Safer to get node inside the tag
       (when-let ((parent-node (treesit-node-parent node)))
         (when (and (equal (treesit-node-type node) ">")
