@@ -4,6 +4,7 @@
 
 ## Master
 
+* Fix electric closing tag not working for jsx root element.
 * Add `jtsx-typescript-mode` based on `typescript-ts-mode` for pure `TS` files.
 * Fix wrong cursor position after wrapping.
 
