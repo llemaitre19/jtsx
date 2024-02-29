@@ -183,8 +183,9 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 
 | Function                                 | Description                                                                                                                |
 |------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| `jtsx-jsx-mode`                          | Enable `jtsx-jsx-mode`                                                                                                     |
-| `jtsx-tsx-mode`                          | Enable `jtsx-tsx-mode`                                                                                                     |
+| `jtsx-jsx-mode`                          | Enable `jtsx-jsx-mode`.                                                                                                    |
+| `jtsx-tsx-mode`                          | Enable `jtsx-tsx-mode`.                                                                                                    |
+| `jtsx-typescript-mode`                   | Enable `jtsx-typescript-mode`.                                                                                             |
 | `jtsx-jump-jsx-element-tag-dwim`         | Jump either to the opening or to the closing tag of the JSX element.                                                       |
 | `jtsx-jump-jsx-opening-tag`              | Jump to the opening tag of the JSX element.                                                                                |
 | `jtsx-jump-jsx-closing-tag`              | Jump to the closing tag of the JSX element.                                                                                |
