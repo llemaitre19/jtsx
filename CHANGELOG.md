@@ -2,13 +2,16 @@
 
 # Changelog
 
+## 0.4.0 (2024-03-01)
+
+* Add automatic name synchronization of JSX element tags.
+
 ## 0.3.5 (2024-02-10)
 
 * Fix font lock issue due to a breaking change in treesit grammars.
 
 ## 0.3.4 (2024-02-08)
 
-* Add automatic name synchronization of JSX element tags.
 * Add unwrap and delete features.
 * Fix jsx electric newline having side effects in none jtsx buffers.
 
