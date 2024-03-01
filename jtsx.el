@@ -33,8 +33,8 @@
 
 ;; Summary of features:
 ;; * Commenting/uncommenting JSX code
-;; * Refactoring: moving, wrapping/unwrapping, deleting, renaming `JSX` elements
-;; * Jumping between opening and closing `JSX` elements
+;; * Refactoring: moving, wrapping/unwrapping, deleting, renaming JSX elements
+;; * Jumping between opening and closing JSX elements
 ;; * Electric JSX closing element and new line
 ;; * Code folding
 ;; * Some additional indentation options
