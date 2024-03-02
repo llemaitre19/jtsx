@@ -202,11 +202,17 @@ See `comment-dwim' documentation for ARG usage."
   "Add support for commenting/uncommenting inside JSX.
 See `comment-dwim' documentation for ARG usage."
   (interactive "*P")
-  (if (jtsx-jsx-context-p)
-      (if (jtsx-jsx-attribute-context-p)
-          (jtsx-comment-jsx-attribute-dwim arg)
-        (jtsx-comment-jsx-dwim arg))
-    (comment-dwim arg)))
+  (cond
+   ;; Inside JSX attribute context ?
+   ((or (and (region-active-p) (jtsx-jsx-attribute-context-p))
+        (and (not (region-active-p)) (jtsx-jsx-attribute-context-at-p (line-end-position))))
+    (jtsx-comment-jsx-attribute-dwim arg))
+   ;; Inside JSX context ?
+   ((or (and (region-active-p) (jtsx-jsx-context-p))
+        (and (not (region-active-p)) (jtsx-jsx-context-at-p (line-end-position))))
+    (jtsx-comment-jsx-dwim arg))
+   ;; General case
+   (t (comment-dwim arg))))
 
 (defun jtsx-enclosing-jsx-node (node types &optional fallback-types include-node jsx-exp-guard)
   "Get first parent of NODE matching one of TYPES.

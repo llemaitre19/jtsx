@@ -292,6 +292,20 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (comment-dwim-into-buffer content set-point #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-point #'jtsx-tsx-mode) result))))
 
+(ert-deftest jtsx-test-comment-jsx-at-attribute-point ()
+  (let ((set-point #'(lambda () (progn (goto-char 8))))
+        (content "(\n<A attr>\n</A>\n);")
+        (result "(\n<A attr>                        {/*  */}\n</A>\n);"))
+    (should (equal (comment-dwim-into-buffer content set-point #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-comment-jsx-attribute-at-point ()
+  (let ((set-point #'(lambda () (progn (goto-char 8))))
+        (content "(\n<A\n attr\n>\n</A>\n);")
+        (result "(\n<A\n attr                           /*  */\n>\n</A>\n);"))
+    (should (equal (comment-dwim-into-buffer content set-point #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-point #'jtsx-tsx-mode) result))))
+
 ;; TEST INDENTATION
 (ert-deftest jtsx-test-no-indent-switch-case ()
   (let ((jtsx-switch-indent-offset 0)
