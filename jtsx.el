@@ -476,8 +476,7 @@ Return a plist containing the move information : `:node-start', `:node-end',
          (enclosing-node (jtsx-enclosing-jsx-node current-node
                                                   jtsx-jsx-ts-root-keys
                                                   nil
-                                                  t
-                                                  t)) ; Do not traverse jsx expression
+                                                  t))
          (moving-opening-or-closing-tag (and (not full-element-move)
                                              (member current-node-type
                                                      jtsx-jsx-ts-element-tag-keys)))
@@ -718,13 +717,13 @@ Keys are `:start' and `:end'."
          (start-pos (plist-get region :start))
          (end-pos (plist-get region :end))
          (start-element (jtsx-enclosing-jsx-node (treesit-node-at start-pos)
-                                                 jtsx-jsx-ts-root-keys nil t t))
+                                                 jtsx-jsx-ts-root-keys nil t))
          (end-element (if (region-active-p)
                           ;; It is safer to go back by one character as treesit looks at
                           ;; the node after the position (excepted when at the end of the line).
                           ;; This is usefull for inline elements.
                           (jtsx-enclosing-jsx-node (treesit-node-at (1- end-pos))
-                                                   jtsx-jsx-ts-root-keys nil t t)
+                                                   jtsx-jsx-ts-root-keys nil t)
                         start-element))
          (start-element-type (treesit-node-type start-element))
          (end-element-type (treesit-node-type end-element)))
@@ -818,7 +817,6 @@ ELEMENT-NAME is the name of the new wrapping element."
       (if-let ((node (jtsx-enclosing-jsx-node (treesit-node-at (point))
                                               jtsx-jsx-ts-root-keys
                                               nil
-                                              t
                                               t)))
           (let ((start-pos (treesit-node-start node))
                 (end-pos (treesit-node-end node)))
