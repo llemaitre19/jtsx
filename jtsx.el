@@ -861,10 +861,11 @@ ELEMENT-NAME is the name of the new wrapping element."
         (message "Not able to retrieve the node to delete."))
     (message "Not inside jsx context.")))
 
-(defun jtsx-hs-forward-sexp (n)
+(defun jtsx-hs-forward-sexp (&optional arg interactive)
   "Make `forward-sexp' compatible with Hideshow in JSX.
-See `forward-sexp' documentation for informations about N argument."
-  (interactive "p")
+See `forward-sexp' documentation for informations about ARG and
+INTERACTIVE and argument."
+  (interactive "^p\nd")
   (or (when (jtsx-jsx-context-p)
         (when-let* ((node (jtsx-treesit-node-at (point)))
                     (enclosing-node
@@ -876,7 +877,7 @@ See `forward-sexp' documentation for informations about N argument."
       ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988 Use the
       ;; default one instead.
       (let ((forward-sexp-function nil))
-        (forward-sexp n))))
+        (forward-sexp arg interactive))))
 
 (defun jtsx-hs-looking-at-block-start-p ()
   "Return non-nil if the point is at the block start."
