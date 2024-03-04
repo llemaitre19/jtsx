@@ -865,25 +865,34 @@ ELEMENT-NAME is the name of the new wrapping element."
   "Make `forward-sexp' compatible with Hideshow in JSX.
 See `forward-sexp' documentation for informations about N argument."
   (interactive "p")
-  (unless (and (jtsx-jsx-context-p)
-               (when-let* ((node (jtsx-treesit-node-at (point)))
-                           (enclosing-node (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                           (end-pos (treesit-node-end enclosing-node)))
-                 (goto-char end-pos)))
-    ;; Starting Emacs 30, treesit set its own function, which has some issues.
-    ;; Bug report: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988
-    ;; Use the default one instead.
-    (let ((forward-sexp-function nil))
-      (forward-sexp n))))
+  (or (when (jtsx-jsx-context-p)
+        (when-let* ((node (jtsx-treesit-node-at (point)))
+                    (enclosing-node
+                     (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
+                    (end-pos (treesit-node-end enclosing-node)))
+          (goto-char end-pos)))
+      ;; Starting Emacs 30, treesit set its own function, which has
+      ;; some issues. Bug report:
+      ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988 Use the
+      ;; default one instead.
+      (let ((forward-sexp-function nil))
+        (forward-sexp n))))
+
+(defun jtsx-hs-looking-at-block-start-p ()
+  "Return non-nil if the point is at the block start."
+  (if (jtsx-jsx-context-p)
+      (looking-at hs-block-start-regexp)
+    (hs-looking-at-block-start-p)))
 
 (defun jtsx-hs-find-block-beginning ()
   "Enhance `hs-find-block-beginning' for JSX."
-  (unless (and (jtsx-jsx-context-p)
-               (when-let* ((node (jtsx-treesit-node-at (point)))
-                           (enclosing-node (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                           (start-pos (treesit-node-start enclosing-node)))
-                 (goto-char start-pos)))
-    (hs-find-block-beginning)))
+  (or (when (jtsx-jsx-context-p)
+        (when-let* ((node (jtsx-treesit-node-at (point)))
+                    (enclosing-node
+                     (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
+                    (start-pos (treesit-node-start enclosing-node)))
+          (goto-char start-pos)))
+      (hs-find-block-beginning)))
 
 (defmacro jtsx-ts-indent-rules-for-key (ts-lang-key)
   "Extract indent rules for TS-LANG-KEY language from `jtsx-ts-indent-rules'."
@@ -965,10 +974,15 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
 
   ;; JSX folding with Hideshow
   (add-to-list 'hs-special-modes-alist
-               `(,mode "{\\|(\\|<[^/>]*>" "}\\|)\\|</[^/>]*>" "/[*/]"
-                       jtsx-hs-forward-sexp
-                       nil
-                       jtsx-hs-find-block-beginning)))
+               `(,mode
+                 "{\\|(\\|<[^/][^>]*>"
+                 "}\\|)\\|</[^/>]*[^/]>"
+                 "/[*/]"
+                 jtsx-hs-forward-sexp
+                 nil
+                 jtsx-hs-find-block-beginning
+                 nil
+                 jtsx-hs-looking-at-block-start-p)))
 
 (defun jtsx-font-lock-compatibility-function-expression (ts-lang-key)
   "Handle tree-sitter grammar breaking change for `function' expression.
