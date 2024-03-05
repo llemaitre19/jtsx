@@ -210,9 +210,16 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
 
 ;; TEST COMMENTS
 (ert-deftest jtsx-test-comment-js-region ()
-  (let ((set-region #'(lambda () (find-and-set-region "var")))
+  (let ((set-region #'(lambda () (find-and-set-region "var;")))
         (content "let var;")
-        (result "let // var\n;"))
+        (result "let // var;"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-uncomment-js-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "// var")))
+        (content "let // var;")
+        (result "let var;"))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
@@ -223,10 +230,24 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
+(ert-deftest jtsx-test-uncomment-jsx-text-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "{\\/\\* Hello \\*\\/}")))
+        (content "(<A>{/* Hello */}</A>);")
+        (result "(<A>Hello</A>);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
 (ert-deftest jtsx-test-comment-jsx-attribute-region ()
   (let ((set-region #'(lambda () (find-and-set-region "disabled={false}")))
         (content "(<A disabled={false}>Hello</A>);")
         (result "(<A /* disabled={false} */>Hello</A>);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-uncomment-jsx-attribute-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "\\/\\* disabled={false} \\*\\/")))
+        (content "(<A /* disabled={false} */>Hello</A>);")
+        (result "(<A disabled={false}>Hello</A>);"))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
@@ -237,10 +258,24 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
+(ert-deftest jtsx-test-uncomment-jsx-boolean-attribute-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "\\/\\* disabled \\*\\/")))
+        (content "(<A /* disabled */>Hello</A>);")
+        (result "(<A disabled>Hello</A>);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
 (ert-deftest jtsx-test-comment-jsx-attribute-region-in-self-closing-tag ()
   (let ((set-region #'(lambda () (find-and-set-region "disabled={false}")))
         (content "(<A disabled={false} />);")
         (result "(<A /* disabled={false} */ />);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-uncomment-jsx-attribute-region-in-self-closing-tag ()
+  (let ((set-region #'(lambda () (find-and-set-region "\\/\\* disabled={false} \\*\\/")))
+        (content "(<A /* disabled={false} */ />);")
+        (result "(<A disabled={false} />);"))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
@@ -251,10 +286,24 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
+(ert-deftest jtsx-test-uncomment-jsx-boolean-attribute-region-in-self-closing-tag ()
+  (let ((set-region #'(lambda () (find-and-set-region "\\/\\* disabled \\*\\/")))
+        (content "(<A /* disabled */ />);")
+        (result "(<A disabled />);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
 (ert-deftest jtsx-test-comment-jsx-region-nested-in-attribute ()
   (let ((set-region #'(lambda () (find-and-set-region "<B />")))
         (content "(<A attr={<B />} />);")
         (result "(<A attr={{/* <B /> */}} />);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-uncomment-jsx-region-nested-in-attribute ()
+  (let ((set-region #'(lambda () (find-and-set-region "{\\/\\* <B \\/> \\*\\/}")))
+        (content "(<A attr={{/* <B /> */}} />);")
+        (result "(<A attr={<B />} />);"))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
@@ -265,6 +314,13 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
+(ert-deftest jtsx-test-uncomment-jsx-expression-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "{\\/\\* {'test'} \\*\\/}")))
+        (content "(<A>{/* {'test'} */}</A>);")
+        (result "(<A>{'test'}</A>);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
 (ert-deftest jtsx-test-comment-jsx-opening-element-region ()
   (let ((set-region #'(lambda () (find-and-set-region "A")))
         (content "(<A></A>);")
@@ -272,10 +328,53 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
+(ert-deftest jtsx-test-uncomment-jsx-opening-element-region ()
+  :expected-result :failed
+  (let ((set-region #'(lambda () (find-and-set-region "{\\/\\* A \\*\\/}")))
+        (content "(<{/* A */}></A>);")
+        (result "(<A></A>);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
 (ert-deftest jtsx-test-comment-jsx-closing-element-region ()
   (let ((set-region #'(lambda () (find-and-set-region "A" 2)))
         (content "(<A></A>);")
         (result "(<A></{/* A */}>);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-uncomment-jsx-closing-element-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "{\\/\\* A \\*\\/}")))
+        (content "(<A></{/* A */}>);")
+        (result "(<A></A>);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-comment-jsx-nested-js-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "return <B />")))
+        (content "(<A>{[].map(()=>{return <B />})}</A>);")
+        (result "(<A>{[].map(()=>{// return <B />\n})}</A>);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-uncomment-jsx-nested-js-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "\\/\\/ return <B \\/>")))
+        (content "(<A>{[].map(()=>{// return <B />\n})}</A>);")
+        (result "(<A>{[].map(()=>{return <B />\n})}</A>);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-comment-jsx-nested-js-in-attribute-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "a:1")))
+        (content "(<A attr={{a:1}}></A>);")
+        (result "(<A attr={{// a:1\n}}></A>);"))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
+    (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-uncomment-jsx-nested-js-in-attribute-region ()
+  (let ((set-region #'(lambda () (find-and-set-region "\\// a:1")))
+        (content "(<A attr={{// a:1\n}}></A>);")
+        (result "(<A attr={{a:1\n}}></A>);"))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
