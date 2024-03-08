@@ -866,18 +866,30 @@ ELEMENT-NAME is the name of the new wrapping element."
 See `forward-sexp' documentation for informations about ARG and
 INTERACTIVE and argument."
   (interactive "^p\nd")
-  (or (when (jtsx-jsx-context-p)
-        (when-let* ((node (jtsx-treesit-node-at (point)))
+  (if (jtsx-jsx-context-p)
+      (cond
+       ((and (number-or-marker-p arg) (< arg 0))
+        (when-let* ((node (treesit-node-at (point)))
                     (enclosing-node
                      (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                    (end-pos (treesit-node-end enclosing-node)))
-          (goto-char end-pos)))
-      ;; Starting Emacs 30, treesit set its own function, which has
-      ;; some issues. Bug report:
-      ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988 Use the
-      ;; default one instead.
-      (let ((forward-sexp-function nil))
-        (forward-sexp arg interactive))))
+                    (end-start (treesit-node-start enclosing-node)))
+          (goto-char end-start)))
+       (t (when-let* ((node (treesit-node-at (point)))
+                      (enclosing-node
+                       (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
+                      (end-pos (treesit-node-end enclosing-node)))
+            (goto-char end-pos))))
+    (if (or
+         ;; Starting Emacs 30, treesit set its own function, which has
+         ;; some issues. Bug report:
+         ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988 Use the
+         ;; default one instead.
+         (> 30 emacs-major-version)
+         ;; Prevent recursive call
+         (eq forward-sexp-function #'jtsx-hs-forward-sexp))
+        (let ((forward-sexp-function nil))
+          (forward-sexp arg interactive))
+      (forward-sexp arg interactive))))
 
 (defun jtsx-hs-looking-at-block-start-p ()
   "Return non-nil if the point is at the block start."
@@ -1421,13 +1433,14 @@ WHEN indicates when the mode starts to be obsolete."
 (defun jtsx-typescript-tsx-configure-mode-common(ts-lang-key)
   "Common part of jtsx-typescript-mode and jtsx-tsx-mode.
 TS-LANG-KEY is the treesit language key."
-(setq-local jtsx-ts-indent-rules (typescript-ts-mode--indent-rules ts-lang-key))
-      (jtsx-add-support-for-switch-indent-option ts-lang-key)
-      (when (version<= emacs-version "29.2")
-        ;; Fix a font lock bug
-        ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=69024)
-        (setq-local treesit-font-lock-settings
-                    (jtsx-tsx-mode-font-lock-settings ts-lang-key))))
+  (setq-local jtsx-ts-indent-rules
+              (typescript-ts-mode--indent-rules ts-lang-key))
+  (jtsx-add-support-for-switch-indent-option ts-lang-key)
+  (when (version<= emacs-version "29.2")
+    ;; Fix a font lock bug
+    ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=69024)
+    (setq-local treesit-font-lock-settings
+                (jtsx-tsx-mode-font-lock-settings ts-lang-key))))
 
 ;;;###autoload
 (define-derived-mode jtsx-tsx-mode tsx-ts-mode "TSX"
