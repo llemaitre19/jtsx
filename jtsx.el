@@ -872,8 +872,8 @@ INTERACTIVE and argument."
       (when-let* ((node (treesit-node-at (point)))
                   (enclosing-node
                    (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                  (end-start (treesit-node-start enclosing-node)))
-        (goto-char end-start)))
+                  (start-pos (treesit-node-start enclosing-node)))
+        (goto-char start-pos)))
      (t (when-let* ((node (treesit-node-at (point)))
                     (enclosing-node
                      (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
@@ -892,6 +892,29 @@ INTERACTIVE and argument."
         (let ((forward-sexp-function nil))
           (forward-sexp arg interactive))
       (forward-sexp arg interactive))))
+
+(defun jtsx-backward-up-list
+    (&optional arg escape-strings no-syntax-crossing should-push-mark)
+  "Adding `backward-up-list' support when inside JSX block.
+If SHOULD-PUSH-MARK is non-nil (as it is interactively), call
+`push-mark' before moving point to another position."
+  (interactive "^p\nd\nd\nd")
+  (if (jtsx-jsx-context-p)
+      (when-let* ((node (treesit-node-at (point)))
+                  (enclosing-node
+                   (jtsx-enclosing-jsx-node node '("jsx_element"
+                                                   "jsx_self_closing_element")))
+                  (parent-node (treesit-node-parent enclosing-node))
+                  (start-pos (treesit-node-start parent-node)))
+        (when should-push-mark (push-mark nil t nil))
+        (goto-char start-pos))
+    (let ((orig-pos (point)))
+      (condition-case nil
+          (progn
+            (backward-up-list arg escape-strings no-syntax-crossing)
+            (when should-push-mark (push-mark orig-pos t nil)))
+        ((scan-error user-error)
+         (goto-char orig-pos))))))
 
 (defun jtsx-hs-looking-at-block-start-p ()
   "Return non-nil if the point is at the block start."
