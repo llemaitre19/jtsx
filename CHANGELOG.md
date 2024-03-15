@@ -2,6 +2,10 @@
 
 # Changelog
 
+## Master
+
+* Enhancements on JSX comment functionality.
+
 ## 0.4.1 (2024-03-15)
 
 * Fix electric closing tag not working for jsx root element.
