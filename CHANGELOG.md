@@ -2,7 +2,7 @@
 
 # Changelog
 
-## Master
+## 0.4.1 (2024-03-15)
 
 * Fix electric closing tag not working for jsx root element.
 * Add `jtsx-typescript-mode` based on `typescript-ts-mode` for pure `TS` files.
