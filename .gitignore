@@ -1,2 +1,17 @@
+# Temporary files
 *~
 **/#*#
+
+# Byte compilated files
+*.elc
+
+# Eask folders
+.eask/
+dist/
+
+# Packaging
+*-autoloads.el
+*-pkg.el
+
+# Readme preview
+README.html
