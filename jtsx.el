@@ -1474,7 +1474,7 @@ WHEN indicates when the mode starts to be obsolete."
                                              parent-bol typescript-ts-mode-indent-offset)))
 
 (defun jtsx-typescript-tsx-configure-mode-common(ts-lang-key)
-  "Common part of jtsx-typescript-mode and jtsx-tsx-mode.
+  "Common part of `jtsx-typescript-mode' and `jtsx-tsx-mode'.
 TS-LANG-KEY is the treesit language key."
   (setq-local jtsx-ts-indent-rules
               (typescript-ts-mode--indent-rules ts-lang-key))
