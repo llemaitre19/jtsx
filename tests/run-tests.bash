@@ -3,7 +3,7 @@
 # Run tests locally (as close as possible to Github Worflows).
 # It requires:
 # - Eask CLI (https://emacs-eask.github.io/)
-# - Nix (https://nixos.org/download)
+# - Nix package manager (https://nixos.org/download)
 # - Enabling Nix 'nix-command' and 'flakes' experimental features (https://nixos.org/manual/nix/stable/command-ref/conf-file#conf-experimental-features)
 
 emacs_versions=("emacs-29-1" "emacs-29-2" "emacs-snapshot")
