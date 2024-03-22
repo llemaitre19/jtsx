@@ -1498,7 +1498,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
 
 (ert-deftest jtsx-test-delete-jsx-expression ()
   (let ((move-point #'(lambda () (goto-char 12)))
-        (content "(\n  <>\n    {`TEST'}\n  </>\n);")
+        (content "(\n  <>\n    {'TEST'}\n  </>\n);")
         (result "(\n  <>\n    \n  </>\n);"))
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
