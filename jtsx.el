@@ -885,7 +885,7 @@ INTERACTIVE and argument."
          ;; some issues. Bug report:
          ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988 Use the
          ;; default one instead.
-         (> 30 emacs-major-version)
+         (>= 30 emacs-major-version)
 
          ;; Prevent recursive call
          (eq forward-sexp-function #'jtsx-hs-forward-sexp))
