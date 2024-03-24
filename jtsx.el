@@ -864,7 +864,8 @@ ELEMENT-NAME is the name of the new wrapping element."
 (defun jtsx-hs-forward-sexp (&optional arg interactive)
   "Make `forward-sexp' compatible with Hideshow in JSX.
 See `forward-sexp' documentation for informations about ARG and
-INTERACTIVE and argument."
+INTERACTIVE arguments.
+Note that ARG values other than 1 and -1 are ingnored inside JSX context."
   (interactive "^p\nd")
   (if (jtsx-jsx-context-p)
     (cond
@@ -897,7 +898,9 @@ INTERACTIVE and argument."
     (&optional arg escape-strings no-syntax-crossing should-push-mark)
   "Adding `backward-up-list' support when inside JSX block.
 If SHOULD-PUSH-MARK is non-nil (as it is interactively), call
-`push-mark' before moving point to another position."
+`push-mark' before moving point to another position.
+Note that ARG is ignored inside JSX context.  For ESCAPE-STRINGS and
+NO-SYNTAX-CROSSING, Please see `backward-up-list'."
   (interactive "^p\nd\nd\nd")
   (if (jtsx-jsx-context-p)
       (when-let* ((node (treesit-node-at (point)))
