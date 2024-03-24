@@ -861,29 +861,79 @@ ELEMENT-NAME is the name of the new wrapping element."
         (message "Not able to retrieve the node to delete."))
     (message "Not inside jsx context.")))
 
-(defun jtsx-hs-forward-sexp (n)
+(defun jtsx-hs-forward-sexp (&optional arg interactive)
   "Make `forward-sexp' compatible with Hideshow in JSX.
-See `forward-sexp' documentation for informations about N argument."
-  (interactive "p")
-  (unless (and (jtsx-jsx-context-p)
-               (when-let* ((node (jtsx-treesit-node-at (point)))
-                           (enclosing-node (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                           (end-pos (treesit-node-end enclosing-node)))
-                 (goto-char end-pos)))
-    ;; Starting Emacs 30, treesit set its own function, which has some issues.
-    ;; Bug report: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988
-    ;; Use the default one instead.
-    (let ((forward-sexp-function nil))
-      (forward-sexp n))))
+See `forward-sexp' documentation for informations about ARG and
+INTERACTIVE arguments.
+Note that ARG values other than 1 and -1 are ingnored inside JSX context."
+  (interactive "^p\nd")
+  (if (jtsx-jsx-context-p)
+    (cond
+     ((and (number-or-marker-p arg) (< arg 0))
+      (when-let* ((node (treesit-node-at (point)))
+                  (enclosing-node
+                   (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
+                  (start-pos (treesit-node-start enclosing-node)))
+        (goto-char start-pos)))
+     (t (when-let* ((node (treesit-node-at (point)))
+                    (enclosing-node
+                     (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
+                    (end-pos (treesit-node-end enclosing-node)))
+          (goto-char end-pos))))
+
+    (if (or
+         ;; Starting Emacs 30, treesit set its own function, which has
+         ;; some issues. Bug report:
+         ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988 Use the
+         ;; default one instead.
+         (>= 30 emacs-major-version)
+
+         ;; Prevent recursive call
+         (eq forward-sexp-function #'jtsx-hs-forward-sexp))
+        (let ((forward-sexp-function nil))
+          (forward-sexp arg interactive))
+      (forward-sexp arg interactive))))
+
+(defun jtsx-backward-up-list
+    (&optional arg escape-strings no-syntax-crossing should-push-mark)
+  "Adding `backward-up-list' support when inside JSX block.
+If SHOULD-PUSH-MARK is non-nil (as it is interactively), call
+`push-mark' before moving point to another position.
+Note that ARG is ignored inside JSX context.  For ESCAPE-STRINGS and
+NO-SYNTAX-CROSSING, Please see `backward-up-list'."
+  (interactive "^p\nd\nd\nd")
+  (if (jtsx-jsx-context-p)
+      (when-let* ((node (treesit-node-at (point)))
+                  (enclosing-node
+                   (jtsx-enclosing-jsx-node node '("jsx_element"
+                                                   "jsx_self_closing_element")))
+                  (parent-node (treesit-node-parent enclosing-node))
+                  (start-pos (treesit-node-start parent-node)))
+        (when should-push-mark (push-mark nil t nil))
+        (goto-char start-pos))
+    (let ((orig-pos (point)))
+      (condition-case nil
+          (progn
+            (backward-up-list arg escape-strings no-syntax-crossing)
+            (when should-push-mark (push-mark orig-pos t nil)))
+        ((scan-error user-error)
+         (goto-char orig-pos))))))
+
+(defun jtsx-hs-looking-at-block-start-p ()
+  "Return non-nil if the point is at the block start."
+  (if (jtsx-jsx-context-p)
+      (looking-at hs-block-start-regexp)
+    (hs-looking-at-block-start-p)))
 
 (defun jtsx-hs-find-block-beginning ()
   "Enhance `hs-find-block-beginning' for JSX."
-  (unless (and (jtsx-jsx-context-p)
-               (when-let* ((node (jtsx-treesit-node-at (point)))
-                           (enclosing-node (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                           (start-pos (treesit-node-start enclosing-node)))
-                 (goto-char start-pos)))
-    (hs-find-block-beginning)))
+  (or (when (jtsx-jsx-context-p)
+        (when-let* ((node (jtsx-treesit-node-at (point)))
+                    (enclosing-node
+                     (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
+                    (start-pos (treesit-node-start enclosing-node)))
+          (goto-char start-pos)))
+      (hs-find-block-beginning)))
 
 (defmacro jtsx-ts-indent-rules-for-key (ts-lang-key)
   "Extract indent rules for TS-LANG-KEY language from `jtsx-ts-indent-rules'."
@@ -965,10 +1015,15 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
 
   ;; JSX folding with Hideshow
   (add-to-list 'hs-special-modes-alist
-               `(,mode "{\\|(\\|<[^/>]*>" "}\\|)\\|</[^/>]*>" "/[*/]"
-                       jtsx-hs-forward-sexp
-                       nil
-                       jtsx-hs-find-block-beginning)))
+               `(,mode
+                 "{\\|(\\|[[]\\|\\(?:<>\\)\\|<[^/>][^>]*>"
+                 "}\\|)\\|[]]\\|</[^>]*>"
+                 "/[*/]"
+                 jtsx-hs-forward-sexp
+                 nil
+                 jtsx-hs-find-block-beginning
+                 nil
+                 jtsx-hs-looking-at-block-start-p)))
 
 (defun jtsx-font-lock-compatibility-function-expression (ts-lang-key)
   "Handle tree-sitter grammar breaking change for `function' expression.
@@ -1369,28 +1424,43 @@ WHEN indicates when the mode starts to be obsolete."
 (define-derived-mode jtsx-jsx-mode js-ts-mode "JSX"
   "Major mode extending `js-ts-mode'."
   :group 'jtsx
+  (setq-local forward-sexp-function #'jtsx-hs-forward-sexp)
   (let ((ts-lang-key 'javascript))
     (when (treesit-ready-p ts-lang-key)
       ;; js-ts-mode mode sets auto-mode-alist when loaded
       (jtsx-prioritize-mode-if-present 'jtsx-jsx-mode)
-      ;; Do a deep copy of javascript indent rules variable, to prevent side effects as we will
-      ;; modify it.
+
+      ;; Do a deep copy of javascript indent rules variable, to
+      ;; prevent side effects as we will modify it.
       (setq-local jtsx-ts-indent-rules
-                  (jtsx-deep-copy-indent-rules 'javascript js--treesit-indent-rules))
-      (jtsx-ts-remove-indent-rule ts-lang-key
-                                  '((node-is "switch_\\(?:case\\|default\\)") parent-bol 0))
+                  (jtsx-deep-copy-indent-rules
+                   'javascript js--treesit-indent-rules))
+
+      (jtsx-ts-remove-indent-rule
+       ts-lang-key
+       '((node-is "switch_\\(?:case\\|default\\)") parent-bol 0))
+
       (when (version= emacs-version "29.1")
         ;; Fix indentation bug.
         ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=65134)
-        (jtsx-ts-remove-indent-rule ts-lang-key '(js-jsx--treesit-indent-compatibility-bb1f97b))
+        (jtsx-ts-remove-indent-rule
+         ts-lang-key
+         '(js-jsx--treesit-indent-compatibility-bb1f97b))
         (mapc (lambda (rule) (jtsx-ts-add-indent-rule 'javascript rule))
               (js-jsx--treesit-indent-compatibility-bb1f97b)))
+
       (when (version<= emacs-version "29.2")
         ;; Fix some font lock bugs
         ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=67684)
         ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=68879)
-        (setq-local treesit-font-lock-settings (jtsx-jsx-mode-font-lock-settings)))
-      (jtsx-configure-mode-base 'jtsx-jsx-mode jtsx-jsx-mode-map ts-lang-key 'js-indent-level))))
+        (setq-local treesit-font-lock-settings
+                    (jtsx-jsx-mode-font-lock-settings)))
+
+      (jtsx-configure-mode-base
+       'jtsx-jsx-mode
+       jtsx-jsx-mode-map
+       ts-lang-key
+       'js-indent-level))))
 
 ;; Keep old jsx-mode for backward compatibility but mark it as obsolete.
 (jtsx-define-obsolete-mode-alias 'jsx-mode 'jtsx-jsx-mode "jtsx 0.2.1")
@@ -1406,23 +1476,29 @@ WHEN indicates when the mode starts to be obsolete."
 (defun jtsx-typescript-tsx-configure-mode-common(ts-lang-key)
   "Common part of jtsx-typescript-mode and jtsx-tsx-mode.
 TS-LANG-KEY is the treesit language key."
-(setq-local jtsx-ts-indent-rules (typescript-ts-mode--indent-rules ts-lang-key))
-      (jtsx-add-support-for-switch-indent-option ts-lang-key)
-      (when (version<= emacs-version "29.2")
-        ;; Fix a font lock bug
-        ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=69024)
-        (setq-local treesit-font-lock-settings
-                    (jtsx-tsx-mode-font-lock-settings ts-lang-key))))
+  (setq-local jtsx-ts-indent-rules
+              (typescript-ts-mode--indent-rules ts-lang-key))
+  (jtsx-add-support-for-switch-indent-option ts-lang-key)
+  (when (version<= emacs-version "29.2")
+    ;; Fix a font lock bug
+    ;; (see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=69024)
+    (setq-local treesit-font-lock-settings
+                (jtsx-tsx-mode-font-lock-settings ts-lang-key))))
 
 ;;;###autoload
 (define-derived-mode jtsx-tsx-mode tsx-ts-mode "TSX"
   "Major mode extending `tsx-ts-mode'."
   :group 'jtsx
+  (setq-local forward-sexp-function #'jtsx-hs-forward-sexp)
   (let ((ts-lang-key 'tsx))
     (when (treesit-ready-p ts-lang-key)
       (jtsx-typescript-tsx-configure-mode-common ts-lang-key)
-      (jtsx-configure-mode-base 'jtsx-tsx-mode jtsx-tsx-mode-map ts-lang-key
-                                'typescript-ts-mode-indent-offset))))
+
+      (jtsx-configure-mode-base
+       'jtsx-tsx-mode
+       jtsx-tsx-mode-map
+       ts-lang-key
+       'typescript-ts-mode-indent-offset))))
 
 ;; Keep old tsx-mode for backward compatibility but mark it as obsolete.
 (jtsx-define-obsolete-mode-alias 'tsx-mode 'jtsx-tsx-mode "jtsx 0.2.1")
@@ -1434,10 +1510,13 @@ TS-LANG-KEY is the treesit language key."
 (define-derived-mode jtsx-typescript-mode typescript-ts-mode "TS"
   "Major mode extending `typescript-ts-mode'."
   :group 'jtsx
+  ;; TODO: Maybe we should serve JSX blocks in ts files too?
+  ;;       Although not a good practice, such files do exit in the wild.
   (let ((ts-lang-key 'typescript))
     (when (treesit-ready-p ts-lang-key)
       (jtsx-typescript-tsx-configure-mode-common ts-lang-key)
-      (jtsx-customize-indent-rules ts-lang-key 'typescript-ts-mode-indent-offset)
+      (jtsx-customize-indent-rules ts-lang-key
+                                   'typescript-ts-mode-indent-offset)
       (when jtsx-enable-all-syntax-highlighting-features
         (setq-local treesit-font-lock-level 4))
       (treesit-major-mode-setup))))

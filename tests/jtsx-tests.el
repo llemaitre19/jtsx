@@ -202,6 +202,20 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (do-command-into-buffer-ret-position initial-content customize 'jtsx-hs-find-block-beginning
                                        mode))
 
+(defun hs-looking-at-block-start-p-into-buffer (initial-content customize &optional mode)
+   "Return result of `hs-looking-at-block-start-p' in a temp buffer.
+Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
+Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
+  (do-command-into-buffer initial-content customize nil 'jtsx-hs-looking-at-block-start-p
+                          mode))
+
+(defun backward-up-list-into-buffer (initial-content customize &optional mode)
+  "Return point in a temp buffer after backwarding up list.
+Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
+Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
+  (let ((command (lambda () (call-interactively #'jtsx-backward-up-list))))
+  (do-command-into-buffer-ret-position initial-content customize command mode)))
+
 (defun find-and-set-region (re &optional count)
   "Find the region matching RE and set it.  COUNT is the COUNTth match."
   (when (re-search-forward re nil nil count)
@@ -1517,11 +1531,18 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
-;; TEST HIDESHOW CUSTOMIZATION
+;; TEST JTSX-HS-FORWARD-SEXP
 (ert-deftest jtsx-test-hs-forward-sexp-jsx-element ()
   (let ((move-point #'(lambda () (goto-char 2)))
         (content "(<A></A>);")
         (result 9))
+    (should (equal (hs-forward-sexp-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (hs-forward-sexp-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-hs-forward-sexp-jsx-fragment ()
+  (let ((move-point #'(lambda () (goto-char 2)))
+        (content "(<></>);")
+        (result 7))
     (should (equal (hs-forward-sexp-into-buffer content move-point #'jtsx-jsx-mode) result))
     (should (equal (hs-forward-sexp-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
@@ -1539,6 +1560,17 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (hs-forward-sexp-into-buffer content move-point #'jtsx-jsx-mode) result))
     (should (equal (hs-forward-sexp-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
+(ert-deftest jtsx-test-hs-negative-forward-sexp-parenthesis ()
+  (let ((move-point #'(lambda () (goto-char 8)))
+        (command (lambda () (jtsx-hs-forward-sexp -1)))
+        (content "(<A></A>);")
+        (result 2))
+    (should (equal (do-command-into-buffer-ret-position content move-point command #'jtsx-jsx-mode)
+                   result))
+    (should (equal (do-command-into-buffer-ret-position content move-point command #'jtsx-tsx-mode)
+                   result))))
+
+;; TEST JTSX-HS-FIND-ELEMENT-BEGINNING
 (ert-deftest jtsx-test-hs-find-element-beginning-from-opening ()
   (let ((move-point #'(lambda () (goto-char 4)))
         (content "(<A></A>);")
@@ -1602,6 +1634,97 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (hs-find-block-beginning-into-buffer content move-point #'jtsx-jsx-mode) result))
     (should (equal (hs-find-block-beginning-into-buffer content move-point #'jtsx-tsx-mode)
                    result))))
+
+(ert-deftest jtsx-test-jtsx-hs-find-block-beginning-return-value-bug-5 ()
+  ;; https://github.com/llemaitre19/jtsx/issues/5
+  ;; `jtsx-hs-find-block-beginning' must return the value of the new position.
+  (let ((move-point #'(lambda () (goto-char 7)))
+        (content "(<A></A>);")
+        (result 2))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-hs-find-block-beginning
+                                           #'jtsx-jsx-mode)
+                   result))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-hs-find-block-beginning
+                                           #'jtsx-tsx-mode)
+                   result))))
+
+;; TEST JTSX-HS-LOOKING-AT-BLOCK-START-P
+(ert-deftest jtsx-test-hs-looking-at-jsx-element-start ()
+  (let ((move-point #'(lambda () (goto-char 2)))
+        (content "(<A></A>);")
+        (result t))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-hs-looking-at-jsx-fragment-start ()
+  (let ((move-point #'(lambda () (goto-char 2)))
+        (content "(<></>);")
+        (result t))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-hs-looking-not-at-jsx-element-start ()
+  (let ((move-point #'(lambda () (goto-char 3)))
+        (content "(<A></A>);")
+        (result nil))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-hs-looking-at-js-parenthesis-exp-start ()
+  (let ((move-point #'(lambda () (goto-char 4)))
+        (content "if (true) console.log('');")
+        (result t))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point
+                                                            #'jtsx-typescript-mode)
+                   result))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-hs-looking-at-jsx-parenthesis-exp-start ()
+  (let ((move-point #'(lambda () (goto-char 6)))
+        (content "(<A>{(<B />)}</A>);")
+        (result t))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-hs-looking-at-brace-start ()
+  (let ((move-point #'(lambda () (goto-char 5)))
+        (content "(<A>{'hello'}</A>);")
+        (result t))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-hs-looking-at-js-multiline-array-start ()
+  (let ((move-point #'(lambda () (goto-char 7)))
+        (content "const [\n1,\n2,\n] = anArray;")
+        (result t))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-jsx-mode)
+                   result))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point
+                                                            #'jtsx-typescript-mode)
+                   result))
+    (should (equal (hs-looking-at-block-start-p-into-buffer content move-point #'jtsx-tsx-mode)
+                   result))))
+
+;; TEST JTSX-BACKWARD-UP-LIST
+(ert-deftest jtsx-test-backward-up-list ()
+  (let ((move-point #'(lambda () (goto-char 6)))
+        (content "(<A><B /></A>);")
+        (result 2))
+    (should (equal (backward-up-list-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (backward-up-list-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
 ;; TEST OBSOLETE JSX-MODE AND TSX-MODE ALIASES
 (ert-deftest jtsx-test-obsolete-mode-aliases ()
