@@ -40,10 +40,10 @@ test_all:
 	@echo "Testing against all Emacs versions..."
 	(cd tests && ./run-tests.bash)
 
-# copy:
-# 	@echo "Copying in .emacs.d/elpa..."
-# 	$(EASK) install
-
+cross_install:
+	@echo "Cross installing in .emacs.d/elpa..."
+	$(EASK) install
+	$(EASK) run command install-in-emacs-local-config
 
 clean:
 	$(EASK) clean all

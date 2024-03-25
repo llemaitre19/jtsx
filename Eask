@@ -26,3 +26,12 @@
   (funcall-interactively #'treesit-install-language-grammar 'typescript))
 
 (add-hook 'eask-before-test/ert-hook #'install-treesit-languages)
+
+;; Define command to install the package in the local emacs config (~/.emacs.d/elpa)
+(eask-defcommand install-in-emacs-local-config
+  (let ((package-dir (file-name-directory (locate-library "jtsx")))
+        (target-dir (expand-file-name "~/.emacs.d/elpa/")))
+    (copy-directory package-dir target-dir)
+    (message "Installed in %s." (concat target-dir
+                                        (file-name-nondirectory
+                                         (directory-file-name package-dir))))))
