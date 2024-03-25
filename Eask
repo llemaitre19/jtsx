@@ -1,5 +1,5 @@
 (package "jtsx"
-         "0.4.2-rc"
+         "0.4.2pre1"
          "Extends JSX/TSX built-in support")
 
 (website-url "https://github.com/llemaitre19/jtsx")
