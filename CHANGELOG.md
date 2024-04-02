@@ -4,6 +4,8 @@
 
 ## Master
 
+* Add Eask as project management tool.
+* Code folding fixes and enhancements (@ramblehead).
 * Enhancements on JSX comment functionality.
 
 ## 0.4.1 (2024-03-15)
