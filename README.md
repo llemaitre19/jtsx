@@ -212,7 +212,7 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 | `jtsx-enable-jsx-element-tags-auto-sync`                     | `nil`   | Enable automatic name synchronization of jsx element opening and closing tags.                                                                                                                                                                          |
 | `jtsx-enable-all-syntax-highlighting-features`               | `t`     | Enable all available syntax highlighting features.                                                                                                                                                                                                      |
 
-## FAQ
+## Q&A
 
 ### Jumping or refactoring functions sometimes fail, what is going wrong ?
 
