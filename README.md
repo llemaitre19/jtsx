@@ -221,3 +221,8 @@ An invalid `JSX` syntax in the buffer can be the source of the problem. `Tree-si
 ### Why another major mode for editing `JSX` ?
 
 Although popular [`web-mode`](https://github.com/fxbois/web-mode) and [`rjsx-mode`](https://github.com/felipeochoa/rjsx-mode) are very good packages for `JSX` edition, they have been written when Emacs built-in `JSX` support was very poor or absent. Currently, Emacs comes with a pretty good `JSX` / `TSX` support and even gives the possibility to use `Tree-sitter` integration. `jtsx` takes advantage of these new features to provide a lightweight package targetting both `JSX` and `TSX` with some handy functionalities.
+
+
+## Contributing
+
+All kinds of contributions are welcome: issues, discussions, or pull requests. More informations [here](./CONTRIBUTING.md).

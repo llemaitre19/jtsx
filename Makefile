@@ -37,7 +37,7 @@ lint:
 	$(EASK) lint package
 
 test_all:
-	@echo "Testing against all Emacs versions..."
+	@echo "Testing across all Emacs versions..."
 	(cd tests && ./run-tests.bash)
 
 cross_install:
