@@ -2,7 +2,7 @@
 
 # Changelog
 
-## Master
+## 0.4.2 (2024-04-18)
 
 * Add Eask as project management tool.
 * Code folding fixes and enhancements (@ramblehead).
