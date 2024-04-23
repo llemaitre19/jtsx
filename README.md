@@ -165,7 +165,7 @@ Also, when inside an empty inline jsx element (typically right after automatic i
 
 These functionalities can be desactivated by setting `jtsx-enable-jsx-electric-closing-element` to `nil` and/or `jtsx-enable-electric-open-newline-between-jsx-element-tags` to `nil`.
 
-ℹ️ _Code completion is not part of `jtsx`. You can get it to work by using [Eglot](https://github.com/joaotavora/eglot) (built-in Emacs), or any other lsp package._
+ℹ️ _Code completion is not part of `jtsx`. You can get it to work by using [Eglot](https://github.com/joaotavora/eglot) (built-in in Emacs), or any other lsp package._
 
 ### Code folding
 
