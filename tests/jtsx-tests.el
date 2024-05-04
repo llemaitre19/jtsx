@@ -320,63 +320,63 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
                                            #'jtsx-tsx-mode)
                    t))))
 
-(ert-deftest jtsx-test-not-in-nested-js-in-jsx-context ()
+(ert-deftest jtsx-test-not-in-js-nested-in-jsx-context ()
   (let ((move-point (lambda () (goto-char 6)))
         (content "(<A><B /></A>);"))
     (should (equal (do-command-into-buffer content move-point nil
-                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-js-nested-in-jsx-context-p
                                            #'jtsx-jsx-mode)
                    nil))
     (should (equal (do-command-into-buffer content move-point nil
-                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-js-nested-in-jsx-context-p
                                            #'jtsx-tsx-mode)
                    nil))))
 
-(ert-deftest jtsx-test-in-nested-js-in-jsx-context-children ()
+(ert-deftest jtsx-test-in-js-nested-in-jsx-context-children ()
   (let ((move-point (lambda () (goto-char 7)))
         (content "(<A>{'js'}</A>);"))
     (should (equal (do-command-into-buffer content move-point nil
-                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-js-nested-in-jsx-context-p
                                            #'jtsx-jsx-mode)
                    t))
     (should (equal (do-command-into-buffer content move-point nil
-                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-js-nested-in-jsx-context-p
                                            #'jtsx-tsx-mode)
                    t))))
 
-(ert-deftest jtsx-test-in-double-nested-js-in-jsx-context-children ()
+(ert-deftest jtsx-test-in-double-js-nested-in-jsx-context-children ()
   (let ((move-point (lambda () (goto-char 13)))
         (content "(<A>{(<B>{'js'}</B>)}</A>);"))
     (should (equal (do-command-into-buffer content move-point nil
-                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-js-nested-in-jsx-context-p
                                            #'jtsx-jsx-mode)
                    t))
     (should (equal (do-command-into-buffer content move-point nil
-                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-js-nested-in-jsx-context-p
                                            #'jtsx-tsx-mode)
                    t))))
 
-(ert-deftest jtsx-test-in-nested-js-in-jsx-context-attribute ()
+(ert-deftest jtsx-test-in-js-nested-in-jsx-context-attribute ()
   (let ((move-point (lambda () (goto-char 13)))
         (content "(<A attr={'js'} />);"))
     (should (equal (do-command-into-buffer content move-point nil
-                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-js-nested-in-jsx-context-p
                                            #'jtsx-jsx-mode)
                    t))
     (should (equal (do-command-into-buffer content move-point nil
-                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-js-nested-in-jsx-context-p
                                            #'jtsx-tsx-mode)
                    t))))
 
-(ert-deftest jtsx-test-in-double-nested-js-in-jsx-context-attribute ()
+(ert-deftest jtsx-test-in-double-js-nested-in-jsx-context-attribute ()
   (let ((move-point (lambda () (goto-char 21)))
         (content "(<A attr={<B attr={'js'} />} />);"))
     (should (equal (do-command-into-buffer content move-point nil
-                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-js-nested-in-jsx-context-p
                                            #'jtsx-jsx-mode)
                    t))
     (should (equal (do-command-into-buffer content move-point nil
-                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-js-nested-in-jsx-context-p
                                            #'jtsx-tsx-mode)
                    t))))
 

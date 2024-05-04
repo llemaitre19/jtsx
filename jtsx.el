@@ -229,7 +229,7 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
               ;; rather be the expected behaviour and the comment syntax is javascript compatible.
               (t t))))))
 
-(defun jtsx-nested-js-in-jsx-context-at-p (position)
+(defun jtsx-js-nested-in-jsx-context-at-p (position)
   "Check if inside JS nested in JSX context at POSITION.
 
 The logic is quite basic : if `jtsx-jsx-context-at-p' returns t without
@@ -237,15 +237,15 @@ The logic is quite basic : if `jtsx-jsx-context-at-p' returns t without
 inside JS nested in JSX context else not."
   (when (and (not (jtsx-jsx-context-at-p position t)) (jtsx-jsx-context-at-p position)) t))
 
-(defun jtsx-nested-js-in-jsx-context-p ()
+(defun jtsx-js-nested-in-jsx-context-p ()
   "Check if inside JS nested in JSX context at point or at region ends.
 
 If region is active, we assume that having one of the regions ends in nested JS
 in JSX context means we are in nested JS in JSX context.  It enables to cover
 that kind of case:
 <A>{[1, 2, 3].map((val)=>{ return <B attr={val} />})}</A>."
-  (or (jtsx-nested-js-in-jsx-context-at-p (point))
-       (and (region-active-p) (jtsx-nested-js-in-jsx-context-at-p (mark)))))
+  (or (jtsx-js-nested-in-jsx-context-at-p (point))
+       (and (region-active-p) (jtsx-js-nested-in-jsx-context-at-p (mark)))))
 
 (defun jtsx-comment-jsx-dwim (arg)
   "Comment or uncomment JSX at point or in region.
@@ -286,7 +286,7 @@ See `comment-dwim' documentation for ARG usage."
        ((jtsx-jsx-attribute-context-p)
         (jtsx-comment-jsx-attribute-dwim arg))
        ;; Inside JS nested in JSX context ?
-       ((jtsx-nested-js-in-jsx-context-p)
+       ((jtsx-js-nested-in-jsx-context-p)
         (jtsx-comment-js-nested-in-jsx-dwim arg))
        ;; Inside JSX context ?
        ((jtsx-jsx-context-p) ; Do not traverse jsx expressions
@@ -302,7 +302,7 @@ See `comment-dwim' documentation for ARG usage."
        ((jtsx-jsx-context-at-p position t) ; Do not traverse jsx expressions
         (jtsx-comment-jsx-dwim arg))
        ;; Inside JS nested in JSX context ?
-       ((jtsx-nested-js-in-jsx-context-at-p position)
+       ((jtsx-js-nested-in-jsx-context-at-p position)
         (jtsx-comment-js-nested-in-jsx-dwim arg))
        ;; General case
        (t (comment-dwim arg))))))
