@@ -212,9 +212,10 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
        (or (not (region-active-p)) (jtsx-jsx-context-at-p (mark) jsx-exp-guard))))
 
 (defun jtsx-jsx-attribute-context-at-p (position)
-  "Check if insinde a JSX element attribute at POSITION."
+  "Check if inside a JSX element attribute at POSITION."
   (when-let ((node (jtsx-treesit-node-at position)))
-    (jtsx-enclosing-jsx-node node '("jsx_attribute") nil nil t)))
+    (when (jtsx-enclosing-jsx-node node '("jsx_attribute") nil nil t)
+      t)))
 
 (defun jtsx-jsx-attribute-context-p ()
   "Check if in JSX element attribute context at point or at region ends."
@@ -227,6 +228,24 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
               ;; Point and mark contexts mismatch : attribute context takes precedence as it should
               ;; rather be the expected behaviour and the comment syntax is javascript compatible.
               (t t))))))
+
+(defun jtsx-nested-js-in-jsx-context-at-p (position)
+  "Check if inside JS nested in JSX context at POSITION.
+
+The logic is quite basic : if `jtsx-jsx-context-at-p' returns t without
+`jsx-exp-guard' but nil with `jsx-exp-guard' enabled we are likely to be
+inside JS nested in JSX context else not."
+  (when (and (not (jtsx-jsx-context-at-p position t)) (jtsx-jsx-context-at-p position)) t))
+
+(defun jtsx-nested-js-in-jsx-context-p ()
+  "Check if inside JS nested in JSX context at point or at region ends.
+
+If region is active, we assume that having one of the regions ends in nested JS
+in JSX context means we are in nested JS in JSX context.  It enables to cover
+that kind of case:
+<A>{[1, 2, 3].map((val)=>{ return <B attr={val} />})}</A>."
+  (or (jtsx-nested-js-in-jsx-context-at-p (point))
+       (and (region-active-p) (jtsx-nested-js-in-jsx-context-at-p (mark)))))
 
 (defun jtsx-comment-jsx-dwim (arg)
   "Comment or uncomment JSX at point or in region.
@@ -261,21 +280,32 @@ See `comment-dwim' documentation for ARG usage."
   "Add support for commenting/uncommenting inside JSX.
 See `comment-dwim' documentation for ARG usage."
   (interactive "*P")
-  (cond
-   ;; Inside JSX attribute context ?
-   ((or (and (region-active-p) (jtsx-jsx-attribute-context-p))
-        (and (not (region-active-p)) (jtsx-jsx-attribute-context-at-p (line-end-position))))
-    (jtsx-comment-jsx-attribute-dwim arg))
-   ;; Inside JSX context ?
-   ((or (and (region-active-p) (jtsx-jsx-context-p t))
-        (and (not (region-active-p)) (jtsx-jsx-context-at-p (line-end-position))))
-    (jtsx-comment-jsx-dwim arg))
-   ;; Inside JS nested in JSX context ?
-   ((or (and (region-active-p) (jtsx-jsx-context-p))
-        (and (not (region-active-p)) (jtsx-jsx-context-at-p (line-end-position))))
-    (jtsx-comment-js-nested-in-jsx-dwim arg))
-   ;; General case
-   (t (comment-dwim arg))))
+  (if (region-active-p)
+      (cond
+       ;; Inside JSX attribute context ?
+       ((jtsx-jsx-attribute-context-p)
+        (jtsx-comment-jsx-attribute-dwim arg))
+       ;; Inside JS nested in JSX context ?
+       ((jtsx-nested-js-in-jsx-context-p)
+        (jtsx-comment-js-nested-in-jsx-dwim arg))
+       ;; Inside JSX context ?
+       ((jtsx-jsx-context-p) ; Do not traverse jsx expressions
+        (jtsx-comment-jsx-dwim arg))
+       ;; General case
+       (t (comment-dwim arg)))
+    (let ((position (line-end-position)))
+      (cond
+       ;; Inside JSX attribute context ?
+       ((jtsx-jsx-attribute-context-at-p position)
+        (jtsx-comment-jsx-attribute-dwim arg))
+       ;; Inside JSX context ?
+       ((jtsx-jsx-context-at-p position t) ; Do not traverse jsx expressions
+        (jtsx-comment-jsx-dwim arg))
+       ;; Inside JS nested in JSX context ?
+       ((jtsx-nested-js-in-jsx-context-at-p position)
+        (jtsx-comment-js-nested-in-jsx-dwim arg))
+       ;; General case
+       (t (comment-dwim arg))))))
 
 (defun jtsx-jump-jsx-opening-tag ()
   "Jump to the opening tag of the JSX element."

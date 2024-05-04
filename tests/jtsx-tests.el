@@ -222,6 +222,164 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (goto-char (match-beginning 0))
     (set-mark (match-end 0))))
 
+;; TEST CONTEXT FUNCTIONS
+(ert-deftest jtsx-test-not-in-jsx-context ()
+  (let ((move-point (lambda () (goto-char 3)))
+        (content "let a;"))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   nil))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   nil))))
+
+(ert-deftest jtsx-test-in-jsx-context-from-opening-tag ()
+  (let ((move-point (lambda () (goto-char 3)))
+        (content "(<A></A>);"))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
+(ert-deftest jtsx-test-in-jsx-context-from-closing-tag ()
+  (let ((move-point (lambda () (goto-char 6)))
+        (content "(<A></A>);"))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
+(ert-deftest jtsx-test-in-jsx-context-from-children ()
+  (let ((move-point (lambda () (goto-char 5)))
+        (content "(<A></A>);"))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
+(ert-deftest jtsx-test-in-jsx-context-from-attributes ()
+  (let ((move-point (lambda () (goto-char 20)))
+        (content "(<A style={{ height: '80px' }}></A>);"))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
+(ert-deftest jtsx-test-in-jsx-context-jsx-exp-guard ()
+  (let ((move-point (lambda () (goto-char 20)))
+        (content "(<A style={{ height: '80px' }}></A>);")
+        (command (lambda () (jtsx-jsx-context-p t))))
+    (should (equal (do-command-into-buffer content move-point nil command #'jtsx-jsx-mode) nil))
+    (should (equal (do-command-into-buffer content move-point nil command #'jtsx-tsx-mode) nil))))
+
+(ert-deftest jtsx-test-not-in-jsx-attribute-context ()
+  (let ((move-point (lambda () (goto-char 3)))
+        (content "let a;"))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-attribute-context-p
+                                           #'jtsx-jsx-mode)
+                   nil))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-attribute-context-p
+                                           #'jtsx-tsx-mode)
+                   nil))))
+
+(ert-deftest jtsx-test-in-jsx-context-not-jsx-attribute-context ()
+  (let ((move-point (lambda () (goto-char 3)))
+        (content "(<A></A>);"))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-attribute-context-p
+                                           #'jtsx-jsx-mode)
+                   nil))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-attribute-context-p
+                                           #'jtsx-tsx-mode)
+                   nil))))
+
+(ert-deftest jtsx-test-in-jsx-attribute-context-label ()
+  (let ((move-point (lambda () (goto-char 9)))
+        (content "(<A className=\"red\"></A>);"))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-attribute-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-attribute-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
+(ert-deftest jtsx-test-in-jsx-attribute-context-content ()
+  (let ((move-point (lambda () (goto-char 18)))
+        (content "(<A className=\"red\"></A>);"))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-attribute-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-attribute-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
+(ert-deftest jtsx-test-not-in-nested-js-in-jsx-context ()
+  (let ((move-point (lambda () (goto-char 6)))
+        (content "(<A><B /></A>);"))
+    (should (equal (do-command-into-buffer content move-point nil
+                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   nil))
+    (should (equal (do-command-into-buffer content move-point nil
+                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   nil))))
+
+(ert-deftest jtsx-test-in-nested-js-in-jsx-context-children ()
+  (let ((move-point (lambda () (goto-char 7)))
+        (content "(<A>{'js'}</A>);"))
+    (should (equal (do-command-into-buffer content move-point nil
+                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil
+                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
+(ert-deftest jtsx-test-in-double-nested-js-in-jsx-context-children ()
+  (let ((move-point (lambda () (goto-char 13)))
+        (content "(<A>{(<B>{'js'}</B>)}</A>);"))
+    (should (equal (do-command-into-buffer content move-point nil
+                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil
+                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
+(ert-deftest jtsx-test-in-nested-js-in-jsx-context-attribute ()
+  (let ((move-point (lambda () (goto-char 13)))
+        (content "(<A attr={'js'} />);"))
+    (should (equal (do-command-into-buffer content move-point nil
+                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil
+                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
+(ert-deftest jtsx-test-in-double-nested-js-in-jsx-context-attribute ()
+  (let ((move-point (lambda () (goto-char 21)))
+        (content "(<A attr={<B attr={'js'} />} />);"))
+    (should (equal (do-command-into-buffer content move-point nil
+                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil
+                                           #'jtsx-nested-js-in-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
 ;; TEST COMMENTS
 (ert-deftest jtsx-test-comment-js-region ()
   (let ((set-region #'(lambda () (find-and-set-region "var;")))
