@@ -202,6 +202,14 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (do-command-into-buffer-ret-position initial-content customize 'jtsx-hs-find-block-beginning
                                        mode))
 
+(defun rearrange-jsx-attributes-into-buffer (initial-content customize &optional orientation mode)
+  "Return content of a temp buffer after rearranging jsx attributes.
+Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
+ORIENTATION is 'horizontal, 'vertical or nil.
+Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
+  (let ((command (lambda () (jtsx-rearrange-jsx-attributes orientation))))
+    (do-command-into-buffer-ret-content initial-content customize command mode)))
+
 (defun hs-looking-at-block-start-p-into-buffer (initial-content customize &optional mode)
    "Return result of `hs-looking-at-block-start-p' in a temp buffer.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
@@ -1688,6 +1696,110 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
         (result "(\n  <A\n    attr={(\n      \n    )}\n  />\n);"))
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+;; TEST JTSX-REARRANGE-JSX-ATTRIBUTES
+(ert-deftest jtsx-rearrange-no-attribute ()
+  (let ((move-point #'(lambda () (goto-char 3)))
+        (content "(<A />);")
+        (result "(<A />);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-rearrange-one-horizontal-attribute ()
+  (let ((move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A attr={'test'}>\n  </A>\n);")
+        (result "(\n  <A\n    attr={'test'}\n  >\n  </A>\n);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-rearrange-multiple-horizontal-attributes ()
+  (let ((move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A attr={'test'} show>\n  </A>\n);")
+        (result "(\n  <A\n    attr={'test'}\n    show\n  >\n  </A>\n);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-rearrange-one-vertical-attribute ()
+  (let ((move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A\n    attr={'test'}\n  >\n  </A>\n);")
+        (result "(\n  <A attr={'test'}>\n  </A>\n);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-rearrange-multiple-vertical-attributes ()
+  (let ((move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A\n    attr={'test'}\n    show\n  >\n  </A>\n);")
+        (result "(\n  <A attr={'test'} show>\n  </A>\n);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-rearrange-one-horizontal-attribute-self-closing ()
+  (let ((move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A attr={'test'} />\n);")
+        (result "(\n  <A\n    attr={'test'}\n  />\n);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-rearrange-multiple-horizontal-attributes-self-closing ()
+  (let ((move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A attr={'test'} show />\n);")
+        (result "(\n  <A\n    attr={'test'}\n    show\n  />\n);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-rearrange-one-vertical-attribute-self-closing ()
+  (let ((move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A\n    attr={'test'}\n  />\n);")
+        (result "(\n  <A attr={'test'} />\n);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-rearrange-multiple-vertical-attributes-self-closing ()
+  (let ((move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A\n    attr={'test'}\n    show\n  />\n);")
+        (result "(\n  <A attr={'test'} show />\n);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-rearrange-attributes-to-vertical-explicitly ()
+  (let ((move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A attr={'test'} show>\n  </A>\n);")
+        (result "(\n  <A\n    attr={'test'}\n    show\n  >\n  </A>\n);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point 'vertical
+                                                         #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point 'vertical
+                                                         #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-rearrange-attributes-to-horizontal-explicitly ()
+  (let ((move-point #'(lambda () (goto-char 10)))
+        (content "(\n  <A\n    attr={'test'}\n    show\n  >\n  </A>\n);")
+        (result "(\n  <A attr={'test'} show>\n  </A>\n);"))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point 'horizontal
+                                                         #'jtsx-jsx-mode)
+                   result))
+    (should (equal (rearrange-jsx-attributes-into-buffer content move-point 'horizontal
+                                                         #'jtsx-tsx-mode)
+                   result))))
 
 ;; TEST JTSX-HS-FORWARD-SEXP
 (ert-deftest jtsx-test-hs-forward-sexp-jsx-element ()

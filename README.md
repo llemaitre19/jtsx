@@ -13,7 +13,7 @@
 Summary of features:
 
 * Commenting/uncommenting JSX code
-* Refactoring: moving, wrapping/unwrapping, deleting, renaming `JSX` elements
+* Refactoring: moving, wrapping/unwrapping, deleting, renaming `JSX` elements, toggling the orientation of`JSX` attributes
 * Jumping between `JSX` opening and closing tags
 * Electric `JSX` closing tag and new line
 * Code folding
@@ -89,7 +89,10 @@ Here an example of configuration using [use-package](https://github.com/jwiegley
     (define-key mode-map (kbd "C-c C-S-<up>") 'jtsx-move-jsx-element-step-in-backward)
     (define-key mode-map (kbd "C-c j w") 'jtsx-wrap-in-jsx-element)
     (define-key mode-map (kbd "C-c j u") 'jtsx-unwrap-jsx)
-    (define-key mode-map (kbd "C-c j d") 'jtsx-delete-jsx-node))
+    (define-key mode-map (kbd "C-c j d") 'jtsx-delete-jsx-node)
+    (define-key mode-map (kbd "C-c j t") 'jtsx-toggle-jsx-attributes-orientation)
+    (define-key mode-map (kbd "C-c j h") 'jtsx-rearrange-jsx-attributes-horizontally)
+    (define-key mode-map (kbd "C-c j v") 'jtsx-rearrange-jsx-attributes-vertically))
     
   (defun jtsx-bind-keys-to-jtsx-jsx-mode-map ()
       (jtsx-bind-keys-to-mode-map jtsx-jsx-mode-map))
@@ -125,18 +128,18 @@ As an alternative, you can turn `jtsx-enable-jsx-element-tags-auto-sync` to `t` 
 
 `jtsx` implements some commands to move a `JSX` tag or node through the `JSX` structure, re-indenting automatically the modified part of code. `JSX` nodes can be an element (self-closing or not), an expression or a text line.
 
-`M-x jtsx-move-jsx-element-tag-forward` moves a JSX element tag (opening or closing) forward.\
-`M-x jtsx-move-jsx-element-tag-backward` moves a JSX element tag (opening or closing) backward.
+`M-x jtsx-move-jsx-element-tag-forward` moves a `JSX` element tag (opening or closing) forward.\
+`M-x jtsx-move-jsx-element-tag-backward` moves a `JSX` element tag (opening or closing) backward.
 
 ![Move element closing tag forward](./examples/move-closing-tag.gif)
 
-`M-x jtsx-move-jsx-element-forward` moves a JSX element (or any JSX node) forward.\
-`M-x jtsx-move-jsx-element-backward` moves a JSX element (or any JSX node) backward.
+`M-x jtsx-move-jsx-element-forward` moves a `JSX` element (or any `JSX` node) forward.\
+`M-x jtsx-move-jsx-element-backward` moves a `JSX` element (or any `JSX` node) backward.
 
 ![Move element forward](./examples/move-element.gif)
 
-`M-x jtsx-move-jsx-element-step-in-forward` moves a JSX element (or any JSX node) forward. Step into sibling elements if possible.\
-`M-x jtsx-move-jsx-element-step-in-backward` moves a JSX element (or any JSX node) backward. Step into sibling elements if possible.
+`M-x jtsx-move-jsx-element-step-in-forward` moves a `JSX` element (or any `JSX` node) forward. Step into sibling elements if possible.\
+`M-x jtsx-move-jsx-element-step-in-backward` moves a `JSX` element (or any `JSX` node) backward. Step into sibling elements if possible.
 
 ![Move element forward with step-in](./examples/move-element-step-in.gif)
 
@@ -144,16 +147,23 @@ Stepping out when moving can be desactivated by setting `jtsx-jsx-element-move-a
 
 ### Wrapping/Unwrapping JSX nodes
 
-`M-x jtsx-wrap-in-jsx-element` wraps JSX nodes in a new JSX element. Nodes are selected by a region if there is an active one. Else the node at point is used.
-`M-x jtsx-unwrap-jsx` unwraps JSX nodes. The wrapping node to remove is the node at point.
+`M-x jtsx-wrap-in-jsx-element` wraps `JSX` nodes in a new `JSX` element. Nodes are selected by a region if there is an active one. Else the node at point is used.
+`M-x jtsx-unwrap-jsx` unwraps `JSX` nodes. The wrapping node to remove is the node at point.
 
 ![Wrap/unwrap element](./examples/wrap-element.gif)
 
 ### Deleting JSX nodes
 
-`M-x jtsx-delete-jsx-node` deletes the JSX node at point and its children.
+`M-x jtsx-delete-jsx-node` deletes the `JSX` node at point and its children.
 
 ![Delete element](./examples/delete-element.gif)
+
+### Toggling the orientation of JSX attributes
+
+`M-x jtsx-toggle-jsx-attributes-orientation` toggles the orientation of `JSX` element attributes between horizontal (all on the same line) and vertical (one per line).
+`M-x jtsx-rearrange-jsx-attributes-horizontally` and `M-x jtsx-rearrange-jsx-attributes-vertically` can be used to require explicitly the new orientation.
+
+![Toggle attributes orientation](./examples/rearrange-attributes.gif)
 
 ### Electricity
 
@@ -181,24 +191,28 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 
 ### Interactive functions
 
-| Function                                 | Description                                                                                                                |
-|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| `jtsx-jsx-mode`                          | Enable `jtsx-jsx-mode`.                                                                                                    |
-| `jtsx-tsx-mode`                          | Enable `jtsx-tsx-mode`.                                                                                                    |
-| `jtsx-typescript-mode`                   | Enable `jtsx-typescript-mode`.                                                                                             |
-| `jtsx-jump-jsx-element-tag-dwim`         | Jump either to the opening or to the closing tag of the JSX element.                                                       |
-| `jtsx-jump-jsx-opening-tag`              | Jump to the opening tag of the JSX element.                                                                                |
-| `jtsx-jump-jsx-closing-tag`              | Jump to the closing tag of the JSX element.                                                                                |
-| `jtsx-rename-jsx-element`                | Rename a JSX element at point. Point can be in the opening or closing tag.                                                 |
-| `jtsx-move-jsx-element-tag-forward`      | Move a JSX element tag (opening or closing) forward.                                                                       |
-| `jtsx-move-jsx-element-tag-backward`     | Move a JSX element tag (opening or closing) backward.                                                                      |
-| `jtsx-move-jsx-element-forward`          | Move a JSX element (or any JSX node) forward.                                                                              |
-| `jtsx-move-jsx-element-backward`         | Move a JSX element (or any JSX node) backward.                                                                             |
-| `jtsx-move-jsx-element-step-in-forward`  | Move a JSX element (or any JSX node) forward. Step into sibling elements if possible.                                      |
-| `jtsx-move-jsx-element-step-in-backward` | Move a JSX element (or any JSX node) backward. Step into sibling elements if possible.                                     |
-| `jtsx-wrap-in-jsx-element`               | Wrap JSX nodes in a JSX element. Nodes are selected by a region if there is an active one. Else the node at point is used. |
-| `jtsx-unwrap-jsx`                        | Unwrap JSX nodes wrapped in the node at point.                                                                             |
-| `jtsx-delete-jsx-node`                   | Delete a JSX node at point and its children.                                                                               |
+| Function                                     | Description                                                                                                                    |
+|----------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `jtsx-jsx-mode`                              | Enable `jtsx-jsx-mode`.                                                                                                        |
+| `jtsx-tsx-mode`                              | Enable `jtsx-tsx-mode`.                                                                                                        |
+| `jtsx-typescript-mode`                       | Enable `jtsx-typescript-mode`.                                                                                                 |
+| `jtsx-jump-jsx-element-tag-dwim`             | Jump either to the opening or to the closing tag of the `JSX` element.                                                         |
+| `jtsx-jump-jsx-opening-tag`                  | Jump to the opening tag of the `JSX` element.                                                                                  |
+| `jtsx-jump-jsx-closing-tag`                  | Jump to the closing tag of the `JSX` element.                                                                                  |
+| `jtsx-rename-jsx-element`                    | Rename a `JSX` element at point. Point can be in the opening or closing tag.                                                   |
+| `jtsx-move-jsx-element-tag-forward`          | Move a `JSX` element tag (opening or closing) forward.                                                                         |
+| `jtsx-move-jsx-element-tag-backward`         | Move a `JSX` element tag (opening or closing) backward.                                                                        |
+| `jtsx-move-jsx-element-forward`              | Move a `JSX` element (or any `JSX` node) forward.                                                                              |
+| `jtsx-move-jsx-element-backward`             | Move a `JSX` element (or any `JSX` node) backward.                                                                             |
+| `jtsx-move-jsx-element-step-in-forward`      | Move a `JSX` element (or any `JSX` node) forward. Step into sibling elements if possible.                                      |
+| `jtsx-move-jsx-element-step-in-backward`     | Move a `JSX` element (or any `JSX` node) backward. Step into sibling elements if possible.                                     |
+| `jtsx-wrap-in-jsx-element`                   | Wrap `JSX` nodes in a `JSX` element. Nodes are selected by a region if there is an active one. Else the node at point is used. |
+| `jtsx-unwrap-jsx`                            | Unwrap `JSX` nodes wrapped in the node at point.                                                                               |
+| `jtsx-delete-jsx-node`                       | Delete a `JSX` node at point and its children.                                                                                 |
+| `jtsx-toggle-jsx-attributes-orientation`     | Toggle the orientation of `JSX` attributes.                                                                                    |
+| `jtsx-rearrange-jsx-attributes-horizontally` | Rearrange the orientation of `JSX` attributes horizontally.                                                                    |
+| `jtsx-rearrange-jsx-attributes-vertically`   | Rearrange the orientation of `JSX` attributes vertically.                                                                      |
+|                                              |                                                                                                                                |
 
 ### Customizable variables
 
@@ -207,9 +221,9 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 | `jtsx-switch-indent-offset`                                  | `0`     | Offset for indenting the contents of a switch block. The value must not be negative.                                                                                                                                                                    |
 | `jtsx-indent-statement-block-regarding-standalone-parent`    | `nil`   | Use standalone parent as anchor to evaluate statement block indentation. If t and if the parent of a statement block is not on its own line, the statement block will be indented relative to the beginning of the whole parent continuated expression. |
 | `jtsx-jsx-element-move-allow-step-out`                       | `t`     | Allow to step out when moving a jsx element.                                                                                                                                                                                                            |
-| `jtsx-enable-jsx-electric-closing-element`                   | `t`     | Enable electric JSX closing element feature.                                                                                                                                                                                                            |
+| `jtsx-enable-jsx-electric-closing-element`                   | `t`     | Enable electric `JSX` closing element feature.                                                                                                                                                                                                            |
 | `jtsx-enable-electric-open-newline-between-jsx-element-tags` | `t`     | Enable electric new line between jsx element tags                                                                                                                                                                                                       |
-| `jtsx-enable-jsx-element-tags-auto-sync`                     | `nil`   | Enable automatic name synchronization of jsx element opening and closing tags.                                                                                                                                                                          |
+| `jtsx-enable-jsx-element-tags-auto-sync`                     | `nil`   | Enable automatic name synchronization of `JSX` element opening and closing tags.                                                                                                                                                                          |
 | `jtsx-enable-all-syntax-highlighting-features`               | `t`     | Enable all available syntax highlighting features.                                                                                                                                                                                                      |
 
 ## Q&A
@@ -221,7 +235,6 @@ An invalid `JSX` syntax in the buffer can be the source of the problem. `Tree-si
 ### Why another major mode for editing `JSX` ?
 
 Although popular [`web-mode`](https://github.com/fxbois/web-mode) and [`rjsx-mode`](https://github.com/felipeochoa/rjsx-mode) are very good packages for `JSX` edition, they have been written when Emacs built-in `JSX` support was very poor or absent. Currently, Emacs comes with a pretty good `JSX` / `TSX` support and even gives the possibility to use `Tree-sitter` integration. `jtsx` takes advantage of these new features to provide a lightweight package targetting both `JSX` and `TSX` with some handy functionalities.
-
 
 ## Contributing
 

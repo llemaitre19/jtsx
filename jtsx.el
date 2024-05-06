@@ -891,6 +891,123 @@ ELEMENT-NAME is the name of the new wrapping element."
         (message "Not able to retrieve the node to delete."))
     (message "Not inside jsx context.")))
 
+(defun jtsx-guess-jsx-attributes-new-orientation (element)
+  "Try to guess the new expected oriention of JSX ELEMENT attributes.
+Returns either horizontal or vertical symbol."
+  (let* ((element-children (treesit-filter-child
+                            element
+                            (lambda (node)
+                              (not (member (treesit-node-type node) '("<"))))))
+         (separator-count (1- (length element-children)))
+         (newline-count 0)
+         (index 0))
+    (while (< index separator-count)
+      (let* ((current-child (nth index element-children))
+             (next-child (nth (1+ index) element-children))
+             (sep-start (treesit-node-end current-child))
+             (sep-end (treesit-node-start next-child)))
+        (cl-assert (and sep-start sep-end))
+        (when (save-excursion
+              (goto-char sep-start)
+              (re-search-forward "\n" sep-end t))
+          (setq newline-count (1+ newline-count)))
+        (setq index (1+ index))))
+    (if (< separator-count (* newline-count 2))
+        ;; A majority of separators are newlines, the expected new orientation is horizontal
+        'horizontal
+      ;; A majority of separators are spaces, the expected new orientation is vertical
+      'vertical)))
+
+(defun jtsx-rearrange-jsx-attributes-core (element separator &optional skip-last-sep)
+  "Rearrange JSX ELEMENT attributes using SEPARATOR.
+If SKIP-LAST-SEP is not nil, SEPARATOR will not be inserted before the last
+ELEMENT child."
+  (cl-assert (member separator '(" " "\n")))
+  (let* ((element-children (treesit-filter-child
+                            element
+                            (lambda (node)
+                              (not (member (treesit-node-type node) '("<"))))))
+         (element-count (length element-children))
+         (index 0)
+         (rearranged-region "")
+         (new-position (point)))
+    (cl-assert (> element-count 1)) ; At least one attribute and >
+    ;; Generate the rearranged attributes
+    (while (< index element-count)
+      (let* ((child (nth index element-children))
+             (child-start (treesit-node-start child))
+             (child-end (treesit-node-end child)))
+        (cl-assert (and child-start child-end))
+        ;; Save cursor position if relevant
+        (if (and (>= (point) child-start) (<= (point) child-end))
+            (let ((first-child-pos (treesit-node-start (car element-children)))
+                  (position-offset-in-current-child (- (point) child-start)))
+              (cl-assert first-child-pos)
+              (setq new-position (+ first-child-pos
+                                    (length rearranged-region)
+                                    position-offset-in-current-child
+                                    (length separator)))))
+        ;; Increment the rearranged region
+        (setq rearranged-region (concat
+                                 rearranged-region
+                                 (if (or (= index 0)
+                                         (and (= index (1- element-count)) skip-last-sep))
+                                     ""
+                                   separator)
+                                 (buffer-substring-no-properties child-start child-end)))
+        (setq index (1+ index))))
+    ;; Replace old attributes by the rearranged ones and reindent
+    (let ((region-start (treesit-node-start (nth 0 element-children)))
+          (region-end (treesit-node-end (nth (1- element-count) element-children))))
+      (cl-assert (and region-start region-end))
+      (delete-region region-start region-end)
+      (goto-char region-start)
+      (insert rearranged-region)
+      (goto-char new-position) ; Try keep cursor position consistent
+      (indent-region region-start (+ region-start (length rearranged-region))))))
+
+(defun jtsx-rearrange-jsx-attributes (&optional orientation)
+  "Rearrange the orientation of JSX attributes.
+ORIENTATION is horizontal or vertical symbol.  If it is nil, a smart detection
+of the new expected orientation is performed."
+  (if (jtsx-jsx-context-p)
+      (if-let* ((root-element (jtsx-enclosing-jsx-node
+                               (jtsx-treesit-node-at (point))
+                               '("jsx_element" "jsx_self_closing_element"))))
+          (let ((element (if (equal (treesit-node-type root-element) "jsx_element")
+                             (treesit-node-child-by-field-name root-element "open_tag")
+                           root-element)))
+            (cl-assert element nil "Not able to retieve the opening tag.")
+            (if-let ((attributes (treesit-filter-child
+                                  element
+                                  (lambda (node) (equal (treesit-node-type node)
+                                                        "jsx_attribute")))))
+                (pcase (or orientation (jtsx-guess-jsx-attributes-new-orientation element))
+                  ('horizontal (jtsx-rearrange-jsx-attributes-core element
+                                                               " "
+                                                               (equal (treesit-node-type element)
+                                                                      "jsx_opening_element")))
+                  ('vertical (jtsx-rearrange-jsx-attributes-core element "\n"))
+                  (_ (error "Unknown orientation")))
+              (message "No attribute found.")))
+        (message "Not inside a jsx element."))
+    (message "Not inside jsx context.")))
+
+(defun jtsx-toggle-jsx-attributes-orientation ()
+  "Toggle the orientation of JSX attributes."
+  (interactive)
+  (jtsx-rearrange-jsx-attributes))
+
+(defun jtsx-rearrange-jsx-attributes-horizontally ()
+  "Rearrange the orientation of JSX attributes horizontally."
+  (interactive)
+  (jtsx-rearrange-jsx-attributes 'horizontal))
+
+(defun jtsx-rearrange-jsx-attributes-vertically ()
+  "Rearrange the orientation of JSX attributes vertically."
+  (interactive)
+  (jtsx-rearrange-jsx-attributes 'vertical))
+
 (defun jtsx-hs-forward-sexp (&optional arg interactive)
   "Make `forward-sexp' compatible with Hideshow in JSX.
 See `forward-sexp' documentation for informations about ARG and

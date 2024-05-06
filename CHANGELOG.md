@@ -2,6 +2,10 @@
 
 # Changelog
 
+## Master
+
+* Add feature that toggles the orientation of JSX attributes.
+
 ## 0.4.2 (2024-04-18)
 
 * Add Eask as project management tool.
