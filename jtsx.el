@@ -273,7 +273,6 @@ See `comment-dwim' documentation for ARG usage."
   (let ((comment-use-syntax nil)
         (comment-start-skip "\\(?://+\\|{?/\\*+\\)\\s-*")
         (comment-end-skip "\\s-*\\(\\s>\\|\\*+/}?\\)"))
-    (message "comment js-jsx")
     (comment-dwim arg)))
 
 (defun jtsx-comment-dwim (arg)
