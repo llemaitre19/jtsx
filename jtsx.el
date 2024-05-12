@@ -312,7 +312,7 @@ See `comment-dwim' documentation for ARG usage."
   (let ((enclosing-element (jtsx-enclosing-jsx-element-at-point)))
     (if enclosing-element
         (goto-char (1+ (treesit-node-start enclosing-element))) ; +1 to jump right after the "<"
-      (message "No JSX opening element found."))))
+      (message "No JSX opening element found"))))
 
 (defun jtsx-jump-jsx-closing-tag ()
   "Jump to the closing tag of the JSX element."
@@ -320,7 +320,7 @@ See `comment-dwim' documentation for ARG usage."
   (let ((enclosing-element (jtsx-enclosing-jsx-element-at-point)))
     (if enclosing-element
         (goto-char (1- (treesit-node-end enclosing-element))) ; -1 to jump right before the "/>"
-      (message "No JSX closing element found."))))
+      (message "No JSX closing element found"))))
 
 (defun jtsx-jump-jsx-element-tag-dwim ()
   "Jump either to the opening or the closing tag of the JSX element."
@@ -332,14 +332,14 @@ See `comment-dwim' documentation for ARG usage."
           (if (> (point) (+ start (/ (- end start) 2)))
               (jtsx-jump-jsx-opening-tag) ; We are closer to the closing tag.
             (jtsx-jump-jsx-closing-tag))) ; We are closer to the opening tag.
-      (message "No JSX element found."))))
+      (message "No JSX element found"))))
 
 (defun jtsx-rename-jsx-identifier (node new-name &optional move-cursor)
   "Rename the NODE named tag to NEW-NAME.
 If MOVE-CURSOR is t, let the cursor at the end of the insertion."
   (let ((node-start (treesit-node-start node))
         (node-end (treesit-node-end node)))
-    (cl-assert (and node-start node-end) nil "Unable to retrieve start or end of node.")
+    (cl-assert (and node-start node-end))
     (let ((new-identifier-end-pos (save-excursion
                                     (delete-region node-start node-end)
                                     (goto-char node-start)
@@ -353,7 +353,7 @@ If MOVE-CURSOR is t, let the cursor at the end of the insertion."
   "Rename the NODE fragment to NEW-NAME.
 If MOVE-CURSOR is t, let the cursor at the end of the insertion."
   (let ((node-end (treesit-node-end node)))
-    (cl-assert node-end nil "Unable to retrieve end of node.")
+    (cl-assert node-end nil "Unable to retrieve end of node")
     (let ((new-identifier-end-pos (save-excursion
                                     (goto-char (1- node-end)) ; -1 to be inside <> or </>
                                     (insert new-name)
@@ -373,7 +373,7 @@ If MOVE-CURSOR is t, let the cursor at the end of the insertion."
   "Rename a JSX element tag to NEW-NAME at point.
 CHILD-FIELD-NAME identify the tag to rename (`open_tag' or `close_tag')."
   (cl-assert (member child-field-name '("open_tag" "close_tag"))
-             t "Unexpected child-field-name: %s.")
+             t "Unexpected child-field-name: %s")
   ;; Node and parent node are not passed as argument because they must be as up to
   ;; date as possible since the function alters the buffer and hense the treesit
   ;; tree.
@@ -390,13 +390,13 @@ CHILD-FIELD-NAME identify the tag to rename (`open_tag' or `close_tag')."
                        (and (equal current-tag-node-type "jsx_closing_element")
                            (equal child-field-name "close_tag"))))
          (element-node (jtsx-enclosing-jsx-element node)))
-    (cl-assert element-node nil "Unable to retrieve the enclosing jsx_element node.")
+    (cl-assert element-node nil "Unable to retrieve the enclosing jsx_element node")
     (let* ((tag-node (treesit-node-child-by-field-name element-node child-field-name))
            (fragment (jtsx-jsx-fragment-p tag-node))
            (node-to-rename (if fragment tag-node
                              ;; Get identifier node
                              (treesit-node-child-by-field-name tag-node "name"))))
-      (cl-assert node-to-rename nil "Unable to retrieve the node to rename.")
+      (cl-assert node-to-rename)
       (if fragment (jtsx-rename-jsx-fragment node-to-rename new-name move-cursor)
         (jtsx-rename-jsx-identifier node-to-rename new-name move-cursor)))))
 
@@ -413,7 +413,7 @@ Point can be in the opening or closing."
                        ((member parent-node-type jtsx-jsx-ts-element-tag-keys)
                         (jtsx-rename-jsx-element-tag-at-point new-name "open_tag")
                         (jtsx-rename-jsx-element-tag-at-point new-name "close_tag"))))
-      (message "No JSX element to rename."))))
+      (message "No JSX element to rename"))))
 
 (defun jtsx-treesit-syntax-error-in-descendants-p (node)
   "Check recursively if there are errors reported by treesit in NODE descendants."
@@ -594,8 +594,7 @@ Return a plist containing the move information : `:node-start', `:node-end',
             (new-pos (if backward
                          (treesit-node-start node-final-candidate)
                        (treesit-node-end node-final-candidate))))
-        (cl-assert (and node-start node-end new-pos) nil
-                   "Unable to evaluate new position, node start or node end.")
+        (cl-assert (and node-start node-end new-pos))
         (list :node-start node-start :node-end node-end :new-pos new-pos)))))
 
 (defun jtsx-goto-line (line)
@@ -666,8 +665,8 @@ used if FULL-ELEMENT-MOVE is t."
                                            (pos-bol))
                            (save-excursion (goto-char (if backward delete-region-end new-pos))
                                            (pos-eol))))
-        (message "No move in this direction."))
-    (message "Not inside jsx context.")))
+        (message "No move in this direction"))
+    (message "Not inside jsx context")))
 
 (defun jtsx-move-jsx-element-tag-forward ()
   "Move a JSX element tag (opening or closing) forward."
@@ -791,7 +790,7 @@ Keys are `:start' and `:end'."
                         start-element))
          (start-element-type (treesit-node-type start-element))
          (end-element-type (treesit-node-type end-element)))
-    (cl-assert (and start-element end-element) "Not able to retrieve node start or node end.")
+    (cl-assert (and start-element end-element))
     (if (and
          (region-active-p)
          (equal start-element-type "jsx_text")
@@ -833,7 +832,7 @@ ELEMENT-NAME is the name of the new wrapping element."
         (indent-region (save-excursion (jtsx-goto-line opening-line) (pos-bol))
                        (save-excursion (jtsx-goto-line (+ closing-line (if inline-element 0 1)))
                                        (pos-eol))))
-    (message "Not inside jsx context.")))
+    (message "Not inside jsx context")))
 
 (defun jtsx-unwrap-jsx ()
   "Unwrap JSX nodes wrapped in the node at point."
@@ -849,8 +848,7 @@ ELEMENT-NAME is the name of the new wrapping element."
             (cl-assert (and opening-start-pos
                             opening-end-pos
                             closing-start-pos
-                            closing-end-pos)
-                       "At least one of the opening or closing element positions is nil.")
+                            closing-end-pos))
             (let* ((inline-opening-tag (jtsx-inline-content-p opening-start-pos opening-end-pos))
                    (inline-closing-tag (jtsx-inline-content-p closing-start-pos closing-end-pos))
                    (final-opening-start-pos (if inline-opening-tag
@@ -871,8 +869,8 @@ ELEMENT-NAME is the name of the new wrapping element."
             (indent-region final-opening-start-pos (+ final-opening-start-pos
                                                       wrapped-region-size))
             (goto-char (1+ opening-start-pos)))) ; +1 to ensure to be inside the children
-        (message "Not able to retrieve the wrapping node."))
-    (message "Not inside jsx context.")))
+        (message "Not able to retrieve the wrapping node"))
+    (message "Not inside jsx context")))
 
 (defun jtsx-delete-jsx-node ()
   "Delete a JSX node at point and its children."
@@ -884,11 +882,11 @@ ELEMENT-NAME is the name of the new wrapping element."
                                               t)))
           (let ((start-pos (treesit-node-start node))
                 (end-pos (treesit-node-end node)))
-            (cl-assert (and start-pos end-pos) "`start-pos' or `end-pos' is nil.")
+            (cl-assert (and start-pos end-pos))
             ;; Use kill-region to save the content into the clipboard.
             (kill-region start-pos end-pos))
-        (message "Not able to retrieve the node to delete."))
-    (message "Not inside jsx context.")))
+        (message "Not able to retrieve the node to delete"))
+    (message "Not inside jsx context")))
 
 (defun jtsx-guess-jsx-attributes-new-orientation (element)
   "Try to guess the new expected oriention of JSX ELEMENT attributes.
@@ -976,7 +974,7 @@ of the new expected orientation is performed."
           (let ((element (if (equal (treesit-node-type root-element) "jsx_element")
                              (treesit-node-child-by-field-name root-element "open_tag")
                            root-element)))
-            (cl-assert element nil "Not able to retieve the opening tag.")
+            (cl-assert element nil "Not able to retieve the opening tag")
             (if-let ((attributes (treesit-filter-child
                                   element
                                   (lambda (node) (equal (treesit-node-type node)
@@ -988,9 +986,9 @@ of the new expected orientation is performed."
                                                                       "jsx_opening_element")))
                   ('vertical (jtsx-rearrange-jsx-attributes-core element "\n"))
                   (_ (error "Unknown orientation")))
-              (message "No attribute found.")))
-        (message "Not inside a jsx element."))
-    (message "Not inside jsx context.")))
+              (message "No attribute found")))
+        (message "Not inside a jsx element"))
+    (message "Not inside jsx context")))
 
 (defun jtsx-toggle-jsx-attributes-orientation ()
   "Toggle the orientation of JSX attributes."
@@ -1691,7 +1689,7 @@ TS-LANG-KEY is the language to be installed."
                                    "master"
                                    "typescript/src"))
                     (_ nil))))
-      (cl-assert source (format "Not expected language: %s" ts-lang-key))
+      (cl-assert source nil (format "Not expected language: %s" ts-lang-key))
       (let ((lang-source (cons ts-lang-key source)))
         (if treesit-language-source-alist
             (add-to-list 'treesit-language-source-alist lang-source)
