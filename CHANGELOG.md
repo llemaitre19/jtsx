@@ -2,9 +2,9 @@
 
 # Changelog
 
-## Master
+## 0.5.0 (2024-05-03)
 
-* Add feature that toggles the orientation of JSX attributes.
+* Add command to toggle the orientation of JSX attributes.
 
 ## 0.4.2 (2024-04-18)
 
