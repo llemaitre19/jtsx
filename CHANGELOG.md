@@ -2,6 +2,10 @@
 
 # Changelog
 
+## Master
+
+* Fix folding for js nested in jsx.
+
 ## 0.5.0 (2024-05-03)
 
 * Add command to toggle the orientation of JSX attributes.

@@ -192,7 +192,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   "Return point in a temp buffer after forwarding sexp.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
 Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
-  (let ((command (lambda () (call-interactively #'jtsx-hs-forward-sexp))))
+  (let ((command (lambda () (call-interactively #'jtsx-forward-sexp))))
   (do-command-into-buffer-ret-position initial-content customize command mode)))
 
 (defun hs-find-block-beginning-into-buffer (initial-content customize &optional mode)
@@ -1801,7 +1801,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
                                                          #'jtsx-tsx-mode)
                    result))))
 
-;; TEST JTSX-HS-FORWARD-SEXP
+;; TEST JTSX-FORWARD-SEXP
 (ert-deftest jtsx-test-hs-forward-sexp-jsx-element ()
   (let ((move-point #'(lambda () (goto-char 2)))
         (content "(<A></A>);")
@@ -1830,15 +1830,42 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (hs-forward-sexp-into-buffer content move-point #'jtsx-jsx-mode) result))
     (should (equal (hs-forward-sexp-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
-(ert-deftest jtsx-test-hs-negative-forward-sexp-parenthesis ()
-  (let ((move-point #'(lambda () (goto-char 8)))
-        (command (lambda () (jtsx-hs-forward-sexp -1)))
+(ert-deftest jtsx-test-hs-negative-forward-sexp ()
+  (let ((move-point #'(lambda () (goto-char 9)))
+        (command (lambda () (jtsx-forward-sexp -1)))
         (content "(<A></A>);")
         (result 2))
     (should (equal (do-command-into-buffer-ret-position content move-point command #'jtsx-jsx-mode)
                    result))
     (should (equal (do-command-into-buffer-ret-position content move-point command #'jtsx-tsx-mode)
                    result))))
+
+(ert-deftest jtsx-test-hs-multiple-forward-sexp ()
+  (let ((move-point #'(lambda () (goto-char 5)))
+        (command (lambda () (jtsx-forward-sexp 3)))
+        (content "(<A>{'test'}<B /><C></C></A>);")
+        (result 25))
+    (should (equal (do-command-into-buffer-ret-position content move-point command #'jtsx-jsx-mode)
+                   result))
+    (should (equal (do-command-into-buffer-ret-position content move-point command #'jtsx-tsx-mode)
+                   result))))
+
+(ert-deftest jtsx-test-hs-forward-sexp-no-next ()
+  (let ((move-point #'(lambda () (goto-char 25)))
+        (content "(<A>{'test'}<B /><C></C></A>);"))
+    (should-error (hs-forward-sexp-into-buffer content move-point #'jtsx-jsx-mode)
+                  :type 'user-error)
+    (should-error (hs-forward-sexp-into-buffer content move-point #'jtsx-tsx-mode)
+                  :type 'user-error)))
+
+(ert-deftest jtsx-test-hs-forward-sexp-no-previous ()
+  (let ((move-point #'(lambda () (goto-char 5)))
+        (command (lambda () (jtsx-forward-sexp -1)))
+        (content "(<A>{'test'}<B /><C></C></A>);"))
+    (should-error (do-command-into-buffer-ret-position content move-point command #'jtsx-jsx-mode)
+                  :type 'user-error)
+    (should-error (do-command-into-buffer-ret-position content move-point command #'jtsx-tsx-mode)
+                  :type 'user-error)))
 
 ;; TEST JTSX-HS-FIND-ELEMENT-BEGINNING
 (ert-deftest jtsx-test-hs-find-element-beginning-from-opening ()

@@ -6,7 +6,7 @@
 ;; Maintainer: Loïc Lemaître <loic.lemaitre@gmail.com>
 ;; URL: https://github.com/llemaitre19/jtsx
 ;; Package-Requires: ((emacs "29.1"))
-;; Version: 0.5.0
+;; Version: 0.5.1pre1
 ;; Keywords: languages
 
 ;; This file is NOT part of GNU Emacs.
@@ -135,11 +135,44 @@ See `treesit-font-lock-level' for more informations."
 
 (defconst jtsx-jsx-ts-element-tag-keys '("jsx_opening_element" "jsx_closing_element"))
 
-(defconst jtsx-jsx-hs-root-keys '("jsx_element" "jsx_expression"))
+(defconst jtsx-hs-block-keys '(;; Parentheses
+                               "arguments"
+                               "formal_parameters"
+                               "parenthesized_expression"
+                               ;; Brackets
+                               "array"
+                               "array_pattern"
+                               ;; Braces
+                               "class_body"
+                               "export_clause"
+                               "jsx_expression"
+                               "object"
+                               "object_pattern"
+                               "named_imports"
+                               "statement_block"
+                               "switch_body"
+                               ;; JSX elements
+                               "jsx_element"))
 
 (defvar jtsx-ts-indent-rules)
 
 (defvar-local jtsx-last-buffer-chars-modifed-tick 0)
+
+(defun jtsx-goto-none-empty-content (arg)
+  "Go to none empty content.
+If ARG >= O go forward, else backward."
+  (let ((skipped-chars " \t\n\r"))
+    (if (>= arg 0)
+        (skip-chars-forward skipped-chars)
+      (skip-chars-backward skipped-chars))))
+
+(defun jtsx-goto-content-forward ()
+  "Go forward to none empty content."
+  (jtsx-goto-none-empty-content 1))
+
+(defun jtsx-goto-content-backward ()
+  "Go backward to none empty content."
+  (jtsx-goto-none-empty-content -1))
 
 (defun jtsx-save-buffer-chars-modified-tick ()
   "Save the returned value of `buffer-chars-modified-tick' function."
@@ -762,14 +795,13 @@ Member of `post-self-insert-hook'."
 Keys are `:start' and `:end'."
   (let* ((start-pos (min (point) (mark)))
          (end-pos (max (point) (mark)))
-         (skip-chars " \t\n\r")
          (trimmed-start-pos (save-excursion
                               (goto-char start-pos)
-                              (skip-chars-forward skip-chars)
+                              (jtsx-goto-content-forward)
                               (point)))
          (trimmed-end-pos (save-excursion
                             (goto-char end-pos)
-                            (skip-chars-backward skip-chars)
+                            (jtsx-goto-content-backward)
                             (point))))
     (if (< trimmed-start-pos trimmed-end-pos)
         `(:start ,trimmed-start-pos :end ,trimmed-end-pos)
@@ -1005,38 +1037,84 @@ of the new expected orientation is performed."
   (interactive)
   (jtsx-rearrange-jsx-attributes 'vertical))
 
-(defun jtsx-hs-forward-sexp (&optional arg interactive)
+(defun jtsx-forward-sexp-base (&optional arg interactive)
+  "ARG INTERACTIVE."
+  (if (or
+       ;; Starting Emacs 30, treesit set its own function, which has
+       ;; some issues. Bug report:
+       ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988 Use the
+       ;; default one instead.
+       (>= 30 emacs-major-version)
+       ;; Prevent recursive call
+       (eq forward-sexp-function #'jtsx-forward-sexp))
+      (let ((forward-sexp-function nil))
+        (forward-sexp arg interactive))
+    (forward-sexp arg interactive)))
+
+(defun jtsx-forward-sexp (&optional arg interactive)
   "Make `forward-sexp' compatible with Hideshow in JSX.
 See `forward-sexp' documentation for informations about ARG and
-INTERACTIVE arguments.
-Note that ARG values other than 1 and -1 are ingnored inside JSX context."
+INTERACTIVE arguments."
   (interactive "^p\nd")
-  (if (jtsx-jsx-context-p)
-    (cond
-     ((and (number-or-marker-p arg) (< arg 0))
-      (when-let* ((node (treesit-node-at (point)))
-                  (enclosing-node
-                   (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                  (start-pos (treesit-node-start enclosing-node)))
-        (goto-char start-pos)))
-     (t (when-let* ((node (treesit-node-at (point)))
-                    (enclosing-node
-                     (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                    (end-pos (treesit-node-end enclosing-node)))
-          (goto-char end-pos))))
+  (when (or (eq arg 0)
+            (and (> arg 0) (eq (point) (point-max)))
+            (and (< arg 0) (eq (point) (point-min))))
+    ;; Let base function handle these unexpected cases
+    (jtsx-forward-sexp-base arg interactive))
+  (let* ((index (abs arg))
+         (step (/ arg index)))
+    (while (> index 0)
+      (let* ((pos (save-excursion (jtsx-goto-none-empty-content arg)
+                                  (point)))
+             (node (jtsx-treesit-node-at (- pos (if (> arg 0) 0 1))))
+             (node-type (treesit-node-type node))
+             (parent-node (treesit-node-parent node))
+             (parent-node-type (treesit-node-type parent-node)))
+        (cond (;; Handle going over a JSX element
+               (or (and (> arg 0)
+                        (equal node-type "<")
+                        (member parent-node-type '("jsx_opening_element"
+                                                   "jsx_self_closing_element")))
+                   (and (< arg 0)
+                        (member node-type '(">" "/>"))
+                        (member parent-node-type '("jsx_closing_element"
+                                                   "jsx_self_closing_element"))))
+               (let* ((enclosing-node (if (equal parent-node-type "jsx_self_closing_element")
+                                          parent-node
+                                        (treesit-node-parent parent-node)))
+                      (new-pos (if (> arg 0)
+                                   (treesit-node-end enclosing-node)
+                                 (treesit-node-start enclosing-node))))
+                 (cl-assert new-pos)
+                 (goto-char new-pos)))
+              (;; Handle going out JSX element children: no next sexp
+               (or (and (> arg 0)
+                        (equal node-type "</")
+                        (equal parent-node-type "jsx_closing_element"))
+                   (and (< arg 0)
+                        (equal node-type ">")
+                        (equal parent-node-type "jsx_opening_element")))
+               (user-error (if (> arg 0) "No next sexp" "No previous sexp")))
+              (;; Handle going out of JSX opening and (self) closing element
+               (or (and (> arg 0)
+                        (member node-type '(">" "/>"))
+                        (member parent-node-type '("jsx_closing_element"
+                                                   "jsx_self_closing_element")))
+                   (and (< arg 0)
+                        (member node-type '("<" "</"))
+                        (member parent-node-type '("jsx_opening_element"
+                                                   "jsx_self_closing_element"))))
+               (let ((new-pos (if (> arg 0)
+                                  (treesit-node-end parent-node)
+                                (treesit-node-start parent-node))))
+                 (cl-assert new-pos)
+                 (goto-char new-pos)))
+              (t
+               ;; Other cases: use base function
+               (jtsx-forward-sexp-base step interactive)))
+        (setq index (1- index))))))
 
-    (if (or
-         ;; Starting Emacs 30, treesit set its own function, which has
-         ;; some issues. Bug report:
-         ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988 Use the
-         ;; default one instead.
-         (>= 30 emacs-major-version)
-
-         ;; Prevent recursive call
-         (eq forward-sexp-function #'jtsx-hs-forward-sexp))
-        (let ((forward-sexp-function nil))
-          (forward-sexp arg interactive))
-      (forward-sexp arg interactive))))
+(define-obsolete-function-alias 'jtsx-hs-forward-sexp 'jtsx-forward-sexp "jtsx 0.5.1")
 
 (defun jtsx-backward-up-list
     (&optional arg escape-strings no-syntax-crossing should-push-mark)
@@ -1065,19 +1143,17 @@ NO-SYNTAX-CROSSING, Please see `backward-up-list'."
 
 (defun jtsx-hs-looking-at-block-start-p ()
   "Return non-nil if the point is at the block start."
-  (if (jtsx-jsx-context-p)
-      (looking-at hs-block-start-regexp)
-    (hs-looking-at-block-start-p)))
+  (and (looking-at hs-block-start-regexp)
+       (not (equal (treesit-node-type (treesit-node-at (point))) "comment"))))
 
 (defun jtsx-hs-find-block-beginning ()
   "Enhance `hs-find-block-beginning' for JSX."
-  (or (when (jtsx-jsx-context-p)
-        (when-let* ((node (jtsx-treesit-node-at (point)))
-                    (enclosing-node
-                     (jtsx-enclosing-jsx-node node jtsx-jsx-hs-root-keys))
-                    (start-pos (treesit-node-start enclosing-node)))
-          (goto-char start-pos)))
-      (hs-find-block-beginning)))
+  (if-let* ((enclosing-node
+             (jtsx-enclosing-jsx-node (jtsx-treesit-node-at (point)) jtsx-hs-block-keys))
+            (start-pos (treesit-node-start enclosing-node)))
+      (goto-char start-pos)
+    ;; Use hideshow default function if something goes wrong
+    (hs-find-block-beginning)))
 
 (defmacro jtsx-ts-indent-rules-for-key (ts-lang-key)
   "Extract indent rules for TS-LANG-KEY language from `jtsx-ts-indent-rules'."
@@ -1157,13 +1233,17 @@ MODE, MODE-MAP, TS-LANG-KEY, INDENT-VAR-NAME variables allow customization
   ;; popular completion packages : `company-mode', `corfu', `vertico', `auto-complete'.
   (add-hook 'post-command-hook #'jtsx-synchronize-jsx-element-tags -1 t)
 
+  ;; Use jtsx-forward-sexp
+  (setq-local forward-sexp-function #'jtsx-forward-sexp)
+
   ;; JSX folding with Hideshow
   (add-to-list 'hs-special-modes-alist
                `(,mode
                  "{\\|(\\|[[]\\|\\(?:<>\\)\\|<[^/>][^>]*>"
                  "}\\|)\\|[]]\\|</[^>]*>"
-                 "/[*/]"
-                 jtsx-hs-forward-sexp
+                 ;; "/[*/]"
+                 "\\({/[/*]\\)\\|\\(/[/*]\\)"
+                 jtsx-forward-sexp
                  nil
                  jtsx-hs-find-block-beginning
                  nil
@@ -1568,7 +1648,6 @@ WHEN indicates when the mode starts to be obsolete."
 (define-derived-mode jtsx-jsx-mode js-ts-mode "JSX"
   "Major mode extending `js-ts-mode'."
   :group 'jtsx
-  (setq-local forward-sexp-function #'jtsx-hs-forward-sexp)
   (let ((ts-lang-key 'javascript))
     (when (treesit-ready-p ts-lang-key)
       ;; js-ts-mode mode sets auto-mode-alist when loaded
@@ -1633,7 +1712,6 @@ TS-LANG-KEY is the treesit language key."
 (define-derived-mode jtsx-tsx-mode tsx-ts-mode "TSX"
   "Major mode extending `tsx-ts-mode'."
   :group 'jtsx
-  (setq-local forward-sexp-function #'jtsx-hs-forward-sexp)
   (let ((ts-lang-key 'tsx))
     (when (treesit-ready-p ts-lang-key)
       (jtsx-typescript-tsx-configure-mode-common ts-lang-key)
