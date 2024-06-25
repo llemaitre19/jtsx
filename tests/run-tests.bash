@@ -6,7 +6,7 @@
 # - Nix package manager (https://nixos.org/download)
 # - Enabling Nix 'nix-command' and 'flakes' experimental features (https://nixos.org/manual/nix/stable/command-ref/conf-file#conf-experimental-features)
 
-emacs_versions=("emacs-29-1" "emacs-29-2" "emacs-29-3" "emacs-snapshot")
+emacs_versions=("emacs-29-1" "emacs-29-2" "emacs-29-3" "emacs-29-4" "emacs-snapshot")
 
 for version in ${emacs_versions[@]}; do
     printf "###### RUN TESTS ON '%s'. ######\n" $version
