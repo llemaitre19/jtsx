@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        emacs_version: ['29.1', '29.2', '29-3', 'snapshot']
+        emacs_version: ['29.1', '29.2', '29.3', 'snapshot']
 
     steps:
     - name: Install Emacs
