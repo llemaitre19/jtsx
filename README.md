@@ -230,11 +230,23 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 
 ### Jumping or refactoring functions sometimes fail, what is going wrong ?
 
-An invalid `JSX` syntax in the buffer can be the source of the problem. `Tree-sitter` tries to be resilient regarding syntax validity, but sometimes the parser cannot (or is not smart enough to) guess what the errored code means exactly.
+An invalid `JSX` syntax in the buffer can be the source of the problem. `tree-sitter` tries to be resilient regarding syntax validity, but sometimes the parser cannot (or is not smart enough to) guess what the errored code means exactly.
 
 ### Why another major mode for editing `JSX` ?
 
-Although popular [`web-mode`](https://github.com/fxbois/web-mode) and [`rjsx-mode`](https://github.com/felipeochoa/rjsx-mode) are very good packages for `JSX` edition, they have been written when Emacs built-in `JSX` support was very poor or absent. Currently, Emacs comes with a pretty good `JSX` / `TSX` support and even gives the possibility to use `Tree-sitter` integration. `jtsx` takes advantage of these new features to provide a lightweight package targetting both `JSX` and `TSX` with some handy functionalities.
+Although popular [`web-mode`](https://github.com/fxbois/web-mode) and [`rjsx-mode`](https://github.com/felipeochoa/rjsx-mode) are very good packages for `JSX` edition, they have been written when Emacs built-in `JSX` support was very poor or absent. Currently, Emacs comes with a pretty good `JSX` / `TSX` support and even gives the possibility to use `tree-sitter` integration. `jtsx` takes advantage of these new features to provide a lightweight package targetting both `JSX` and `TSX` with some handy functionalities.
+
+### How to install an older version of a `tree-sitter` language ?
+
+Sometimes a bug introduced in a new release of a `tree-sitter` language can break some features in `jtsx`. You can easily revert to an older version of that language by running `M-x eval-expression` and executing this elisp code after having customized the relevant parts, for example:
+``` elisp
+(let ((treesit-language-source-alist
+       '((javascript
+          "https://github.com/tree-sitter/tree-sitter-javascript"
+          "v0.21.3"
+          "src"))))
+  (treesit-install-language-grammar 'javascript))
+```
 
 ## Contributing
 
