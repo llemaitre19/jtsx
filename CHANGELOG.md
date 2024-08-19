@@ -2,7 +2,7 @@
 
 # Changelog
 
-## Master
+## 0.5.1 (2024-07-15)
 
 * Fix folding for js nested in jsx.
 
