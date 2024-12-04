@@ -205,7 +205,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
 (defun rearrange-jsx-attributes-into-buffer (initial-content customize &optional orientation mode)
   "Return content of a temp buffer after rearranging jsx attributes.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
-ORIENTATION is 'horizontal, 'vertical or nil.
+ORIENTATION is `horizontal', `vertical' or nil.
 Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (let ((command (lambda () (jtsx-rearrange-jsx-attributes orientation))))
     (do-command-into-buffer-ret-content initial-content customize command mode)))
