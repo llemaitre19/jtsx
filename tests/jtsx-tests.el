@@ -1421,6 +1421,9 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
                    result))))
 
 (ert-deftest jtsx-test-no-electric-newline-into-none-empty-inline-element ()
+  ;; Known bug in the grammars, see
+  ;; https://github.com/tree-sitter/tree-sitter-javascript/issues/339
+  :expected-result :failed
   (let ((jtsx-enable-electric-open-newline-between-jsx-element-tags t)
         (move-point #'(lambda () (goto-char 8)))
         (content "(\n  <A>TEXT</A>\n);")
@@ -1507,6 +1510,9 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (wrap-in-jsx-element-into-buffer content set-region #'jtsx-tsx-mode) result))))
 
 (ert-deftest jtsx-test-wrap-text-at-point ()
+  ;; Known bug in the grammars, see
+  ;; https://github.com/tree-sitter/tree-sitter-javascript/issues/339
+  :expected-result :failed
   (let ((move-point #'(lambda () (goto-char 11)))
         (content "(\n  <>\n    HELLO\n  </>\n);")
         (result "(\n  <>\n    <W>\n      HELLO\n    </W>\n  </>\n);"))
@@ -1514,6 +1520,9 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (wrap-in-jsx-element-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
 (ert-deftest jtsx-test-wrap-text-at-region ()
+  ;; Known bug in the grammars, see
+  ;; https://github.com/tree-sitter/tree-sitter-javascript/issues/339
+  :expected-result :failed
   (let ((set-region #'(lambda () (find-and-set-region "HELLO")))
         (content "(\n  <>\n    HELLO\n  </>\n);")
         (result "(\n  <>\n    <W>\n      HELLO\n    </W>\n  </>\n);"))
@@ -1670,6 +1679,9 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
 (ert-deftest jtsx-test-delete-jsx-text ()
+  ;; Known bug in the grammars, see
+  ;; https://github.com/tree-sitter/tree-sitter-javascript/issues/339
+  :expected-result :failed
   (let ((move-point #'(lambda () (goto-char 12)))
         (content "(\n  <>\n    TEST\n  </>\n);")
         (result "(\n  <>\n    \n  </>\n);"))
