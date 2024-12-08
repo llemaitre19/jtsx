@@ -920,6 +920,30 @@ ELEMENT-NAME is the name of the new wrapping element."
         (message "Not able to retrieve the node to delete"))
     (message "Not inside jsx context")))
 
+(defun jtsx-delete-jsx-attribute ()
+  "Delete a JSX attribute at point."
+  (interactive)
+  (if (jtsx-jsx-context-p)
+      (if-let ((node (jtsx-enclosing-jsx-node (jtsx-treesit-node-at (point))
+                                              '("jsx_attribute")
+                                              nil
+                                              t)))
+          (let* ((start-pos (treesit-node-start node))
+                 (end-pos (treesit-node-end node))
+                 (previous-node (treesit-node-prev-sibling node))
+                 (prev-node-end-pos (treesit-node-end previous-node)))
+            (cl-assert (and start-pos end-pos))
+            (cl-assert (and prev-node-end-pos))
+            (let ((effective-start-pos (if (eq (line-number-at-pos start-pos)
+                                               (line-number-at-pos prev-node-end-pos))
+                                           ;; Remove the previous space
+                                           prev-node-end-pos
+                                         start-pos)))
+              ;; Use kill-region to save the content into the clipboard.
+              (kill-region effective-start-pos end-pos)))
+        (message "Not able to retrieve the node to delete"))
+    (message "Not inside jsx context")))
+
 (defun jtsx-guess-jsx-attributes-new-orientation (element)
   "Try to guess the new expected oriention of JSX ELEMENT attributes.
 Returns either horizontal or vertical symbol."
