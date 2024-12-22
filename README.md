@@ -89,7 +89,8 @@ Here an example of configuration using [use-package](https://github.com/jwiegley
     (define-key mode-map (kbd "C-c C-S-<up>") 'jtsx-move-jsx-element-step-in-backward)
     (define-key mode-map (kbd "C-c j w") 'jtsx-wrap-in-jsx-element)
     (define-key mode-map (kbd "C-c j u") 'jtsx-unwrap-jsx)
-    (define-key mode-map (kbd "C-c j d") 'jtsx-delete-jsx-node)
+    (define-key mode-map (kbd "C-c j d n") 'jtsx-delete-jsx-node)
+    (define-key mode-map (kbd "C-c j d a") 'jtsx-delete-jsx-attribute)
     (define-key mode-map (kbd "C-c j t") 'jtsx-toggle-jsx-attributes-orientation)
     (define-key mode-map (kbd "C-c j h") 'jtsx-rearrange-jsx-attributes-horizontally)
     (define-key mode-map (kbd "C-c j v") 'jtsx-rearrange-jsx-attributes-vertically))
@@ -158,6 +159,12 @@ Stepping out when moving can be desactivated by setting `jtsx-jsx-element-move-a
 
 ![Delete element](./examples/delete-element.gif)
 
+### Deleting JSX attributes
+
+`M-x jtsx-delete-jsx-attribute` deletes the `JSX` attribute at point.
+
+![Delete attribute](./examples/delete-attribute.gif)
+
 ### Toggling the orientation of JSX attributes
 
 `M-x jtsx-toggle-jsx-attributes-orientation` toggles the orientation of `JSX` element attributes between horizontal (all on the same line) and vertical (one per line).
@@ -209,6 +216,7 @@ Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manu
 | `jtsx-wrap-in-jsx-element`                   | Wrap `JSX` nodes in a `JSX` element. Nodes are selected by a region if there is an active one. Else the node at point is used. |
 | `jtsx-unwrap-jsx`                            | Unwrap `JSX` nodes wrapped in the node at point.                                                                               |
 | `jtsx-delete-jsx-node`                       | Delete a `JSX` node at point and its children.                                                                                 |
+| `jtsx-delete-jsx-attribute`                  | Delete a `JSX` attribute at point.                                                                                             |
 | `jtsx-toggle-jsx-attributes-orientation`     | Toggle the orientation of `JSX` attributes.                                                                                    |
 | `jtsx-rearrange-jsx-attributes-horizontally` | Rearrange the orientation of `JSX` attributes horizontally.                                                                    |
 | `jtsx-rearrange-jsx-attributes-vertically`   | Rearrange the orientation of `JSX` attributes vertically.                                                                      |

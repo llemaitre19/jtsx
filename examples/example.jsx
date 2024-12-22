@@ -1,6 +1,6 @@
 function Example() {
   return (
-    <Container id="conttoainer" className="container" style={{ backgroundColor: 'white' }}>
+    <Container id="container" className="container" style={{ backgroundColor: 'white' }}>
       <C1 show>
         <C2>
           C2 content

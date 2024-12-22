@@ -2,6 +2,10 @@
 
 # Changelog
 
+## Master
+
+* Add delete jsx attribute feature. 
+
 ## 0.5.1 (2024-07-15)
 
 * Fix folding for js nested in jsx.

@@ -188,6 +188,12 @@ Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
 Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (do-command-into-buffer-ret-content initial-content customize 'jtsx-delete-jsx-node mode))
 
+(defun delete-jsx-attribute-into-buffer (initial-content customize &optional mode)
+  "Return the content of a temp buffer after deleting a JSX attribute at point.
+Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
+Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
+  (do-command-into-buffer-ret-content initial-content customize 'jtsx-delete-jsx-attribute mode))
+
 (defun hs-forward-sexp-into-buffer (initial-content customize &optional mode)
   "Return point in a temp buffer after forwarding sexp.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
@@ -1709,8 +1715,51 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-jsx-mode) result))
     (should (equal (delete-jsx-node-into-buffer content move-point #'jtsx-tsx-mode) result))))
 
+;; TEST JTSX-DELETE-JSX-ATTRIBUTE
+(ert-deftest jtsx-test-delete-jsx-attribute-horizontal ()
+  (let ((move-point #'(lambda () (goto-char 15)))
+        (content "(\n  <>\n    <A attr>\n      TEST\n    </A>\n  </>\n);")
+        (result "(\n  <>\n    <A>\n      TEST\n    </A>\n  </>\n);"))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-jsx-attribute-vertical ()
+  (let ((move-point #'(lambda () (goto-char 21)))
+        (content "(\n  <>\n    <A\n      attr\n    >\n      TEST\n    </A>\n  </>\n);")
+        (result "(\n  <>\n    <A\n      \n    >\n      TEST\n    </A>\n  </>\n);"))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-jsx-attribute-horizontal-multiple ()
+  (let ((move-point #'(lambda () (goto-char 15)))
+        (content "(\n  <>\n    <A attr1 attr2>\n      TEST\n    </A>\n  </>\n);")
+        (result "(\n  <>\n    <A attr2>\n      TEST\n    </A>\n  </>\n);"))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-jsx-attribute-vertical-multiple ()
+  (let ((move-point #'(lambda () (goto-char 21)))
+        (content "(\n  <>\n    <A\n      attr1\n      attr2\n    >\n      TEST\n    </A>\n  </>\n);")
+        (result "(\n  <>\n    <A\n      \n      attr2\n    >\n      TEST\n    </A>\n  </>\n);"))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-jsx-attribute-with-value ()
+  (let ((move-point #'(lambda () (goto-char 13)))
+        (content "(<><A attr='test'>TEST</A></>);")
+        (result "(<><A>TEST</A></>);"))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-delete-jsx-attribute-failed ()
+  (let ((move-point #'(lambda () (goto-char 5)))
+        (content "(<><A attr>TEST</A></>);")
+        (result "(<><A attr>TEST</A></>);"))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-jsx-mode) result))
+    (should (equal (delete-jsx-attribute-into-buffer content move-point #'jtsx-tsx-mode) result))))
+
 ;; TEST JTSX-REARRANGE-JSX-ATTRIBUTES
-(ert-deftest jtsx-rearrange-no-attribute ()
+(ert-deftest jtsx-test-rearrange-no-attribute ()
   (let ((move-point #'(lambda () (goto-char 3)))
         (content "(<A />);")
         (result "(<A />);"))
@@ -1719,7 +1768,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-rearrange-one-horizontal-attribute ()
+(ert-deftest jtsx-test-rearrange-one-horizontal-attribute ()
   (let ((move-point #'(lambda () (goto-char 10)))
         (content "(\n  <A attr={'test'}>\n  </A>\n);")
         (result "(\n  <A\n    attr={'test'}\n  >\n  </A>\n);"))
@@ -1728,7 +1777,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-rearrange-multiple-horizontal-attributes ()
+(ert-deftest jtsx-test-rearrange-multiple-horizontal-attributes ()
   (let ((move-point #'(lambda () (goto-char 10)))
         (content "(\n  <A attr={'test'} show>\n  </A>\n);")
         (result "(\n  <A\n    attr={'test'}\n    show\n  >\n  </A>\n);"))
@@ -1737,7 +1786,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-rearrange-one-vertical-attribute ()
+(ert-deftest jtsx-test-rearrange-one-vertical-attribute ()
   (let ((move-point #'(lambda () (goto-char 10)))
         (content "(\n  <A\n    attr={'test'}\n  >\n  </A>\n);")
         (result "(\n  <A attr={'test'}>\n  </A>\n);"))
@@ -1746,7 +1795,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-rearrange-multiple-vertical-attributes ()
+(ert-deftest jtsx-test-rearrange-multiple-vertical-attributes ()
   (let ((move-point #'(lambda () (goto-char 10)))
         (content "(\n  <A\n    attr={'test'}\n    show\n  >\n  </A>\n);")
         (result "(\n  <A attr={'test'} show>\n  </A>\n);"))
@@ -1755,7 +1804,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-rearrange-one-horizontal-attribute-self-closing ()
+(ert-deftest jtsx-test-rearrange-one-horizontal-attribute-self-closing ()
   (let ((move-point #'(lambda () (goto-char 10)))
         (content "(\n  <A attr={'test'} />\n);")
         (result "(\n  <A\n    attr={'test'}\n  />\n);"))
@@ -1764,7 +1813,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-rearrange-multiple-horizontal-attributes-self-closing ()
+(ert-deftest jtsx-test-rearrange-multiple-horizontal-attributes-self-closing ()
   (let ((move-point #'(lambda () (goto-char 10)))
         (content "(\n  <A attr={'test'} show />\n);")
         (result "(\n  <A\n    attr={'test'}\n    show\n  />\n);"))
@@ -1773,7 +1822,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-rearrange-one-vertical-attribute-self-closing ()
+(ert-deftest jtsx-test-rearrange-one-vertical-attribute-self-closing ()
   (let ((move-point #'(lambda () (goto-char 10)))
         (content "(\n  <A\n    attr={'test'}\n  />\n);")
         (result "(\n  <A attr={'test'} />\n);"))
@@ -1782,7 +1831,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-rearrange-multiple-vertical-attributes-self-closing ()
+(ert-deftest jtsx-test-rearrange-multiple-vertical-attributes-self-closing ()
   (let ((move-point #'(lambda () (goto-char 10)))
         (content "(\n  <A\n    attr={'test'}\n    show\n  />\n);")
         (result "(\n  <A attr={'test'} show />\n);"))
@@ -1791,7 +1840,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
     (should (equal (rearrange-jsx-attributes-into-buffer content move-point nil #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-rearrange-attributes-to-vertical-explicitly ()
+(ert-deftest jtsx-test-rearrange-attributes-to-vertical-explicitly ()
   (let ((move-point #'(lambda () (goto-char 10)))
         (content "(\n  <A attr={'test'} show>\n  </A>\n);")
         (result "(\n  <A\n    attr={'test'}\n    show\n  >\n  </A>\n);"))
@@ -1802,7 +1851,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
                                                          #'jtsx-tsx-mode)
                    result))))
 
-(ert-deftest jtsx-rearrange-attributes-to-horizontal-explicitly ()
+(ert-deftest jtsx-test-rearrange-attributes-to-horizontal-explicitly ()
   (let ((move-point #'(lambda () (goto-char 10)))
         (content "(\n  <A\n    attr={'test'}\n    show\n  >\n  </A>\n);")
         (result "(\n  <A attr={'test'} show>\n  </A>\n);"))
