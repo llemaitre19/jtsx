@@ -4,6 +4,7 @@
 
 ## Master
 
+* Add jsdoc language to jtsx-install-treesit-language function.
 * Add delete jsx attribute feature. 
 
 ## 0.5.1 (2024-07-15)
