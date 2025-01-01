@@ -18,10 +18,12 @@
 (defun install-treesit-languages ()
   (setq treesit-language-source-alist
         '((javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+          (jsdoc "https://github.com/tree-sitter/tree-sitter-jsdoc" "master" "src")
           (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
           (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master"
                       "typescript/src")))
   (funcall-interactively #'treesit-install-language-grammar 'javascript)
+  (funcall-interactively #'treesit-install-language-grammar 'jsdoc)
   (funcall-interactively #'treesit-install-language-grammar 'tsx)
   (funcall-interactively #'treesit-install-language-grammar 'typescript))
 

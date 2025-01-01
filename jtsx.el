@@ -1784,6 +1784,9 @@ TS-LANG-KEY is the language to be installed."
                     ('javascript '("https://github.com/tree-sitter/tree-sitter-javascript"
                                    "master"
                                    "src"))
+                    ('jsdoc '("https://github.com/tree-sitter/tree-sitter-jsdoc"
+                              "master"
+                              "src"))
                     ('tsx '("https://github.com/tree-sitter/tree-sitter-typescript"
                             "master"
                             "tsx/src"))

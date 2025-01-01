@@ -37,7 +37,13 @@ The straightforward way to install `jtsx` is through the [Melpa](https://melpa.o
 
 ### `tree-sitter` languages installation
 
-Installing `tree-sitter` languages is required by `jtsx` (`javascript` for `jtsx-jsx-mode`, `tsx` for `jtsx-tsx-mode`, and `typescript` for `jtsx-typescript-mode`). You can use `M-x jtsx-install-treesit-language` command which is a convenient wrapper around `treesit-install-language-grammar` for that purpose.
+Installing `tree-sitter` languages is required by `jtsx`:
+
+* `jtsx-jsx-mode`: `javascript` (and `jsdoc` starting Emacs 30)
+* `jtsx-tsx-mode`: `tsx`
+* `jtsx-typescript-mode`: `typescript`
+
+You can use `M-x jtsx-install-treesit-language` command which is a convenient wrapper around `treesit-install-language-grammar` for that purpose.
 
 For more advanced usages, see `M-x treesit-install-language-grammar` command, or manually compile and set up language libraries.
 
