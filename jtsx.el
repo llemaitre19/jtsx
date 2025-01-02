@@ -1778,7 +1778,7 @@ TS-LANG-KEY is the language to be installed."
   ;; seems buggy.
   ;; Fixed by commit 1098c114b74 in emacs 29.2
   ;; (bug https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66673)
-  (interactive (list (intern (completing-read "Language: " '(javascript tsx typescript)))))
+  (interactive (list (intern (completing-read "Language: " '(javascript jsdoc tsx typescript)))))
   (unless (alist-get ts-lang-key treesit-language-source-alist)
     (let ((source (pcase ts-lang-key
                     ('javascript '("https://github.com/tree-sitter/tree-sitter-javascript"
