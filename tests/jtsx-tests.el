@@ -60,6 +60,13 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
   (let ((command (lambda () (call-interactively #'jtsx-comment-dwim))))
     (do-command-into-buffer-ret-content initial-content customize command mode)))
 
+(defun comment-line-into-buffer (initial-content customize &optional mode)
+  "Return the content of a temp buffer after having commented the current line.
+Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
+Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
+  (let ((command (lambda () (call-interactively #'jtsx-comment-line))))
+    (do-command-into-buffer-ret-content initial-content customize command mode)))
+
 (defun indent-all-into-buffer (initial-content &optional mode)
   "Return the content of a temp buffer after having indenting current line.
 Initialize the buffer with INITIAL-CONTENT and customized it with CUSTOMIZE.
@@ -591,6 +598,48 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
         (result "(\n<A\n attr /*  */\n>\n</A>\n);"))
     (should (equal (comment-dwim-into-buffer content set-point #'jtsx-jsx-mode) result))
     (should (equal (comment-dwim-into-buffer content set-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-comment-js-line ()
+  (let ((set-point #'(lambda () (goto-char 3)))
+        (content "let var;")
+        (result "// let var;"))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-jsx-mode) result))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-uncomment-js-line ()
+  (let ((set-point #'(lambda () (goto-char 4)))
+        (content "// let var;")
+        (result "let var;"))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-jsx-mode) result))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-comment-jsx-text-line ()
+  (let ((set-point #'(lambda () (goto-char 9)))
+        (content "(\n  <A>\n    Hello\n  </A>\n);")
+        (result "(\n  <A>\n    {/* Hello */}\n  </A>\n);"))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-jsx-mode) result))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-uncomment-jsx-text-line ()
+  (let ((set-point #'(lambda () (goto-char 9)))
+        (content "(  <A>\n    {/* Hello */}\n  </A>\n);")
+        (result "(  <A>\n    Hello\n  </A>\n);"))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-jsx-mode) result))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-comment-jsx-attribute-line ()
+  (let ((set-point #'(lambda () (goto-char 9)))
+        (content "(\n  <A\n    disabled={false}\n  >\n      Hello\n  </A>\n);")
+        (result "(\n  <A\n    /* disabled={false} */\n  >\n      Hello\n  </A>\n);"))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-jsx-mode) result))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-tsx-mode) result))))
+
+(ert-deftest jtsx-test-uncomment-jsx-attribute-line ()
+  (let ((set-point #'(lambda () (goto-char 9)))
+        (content "(\n  <A\n    /* disabled={false} */\n  >\n      Hello\n  </A>\n);")
+        (result "(\n  <A\n    disabled={false}\n  >\n      Hello\n  </A>\n);"))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-jsx-mode) result))
+    (should (equal (comment-line-into-buffer content set-point #'jtsx-tsx-mode) result))))
 
 ;; TEST INDENTATION
 (ert-deftest jtsx-test-no-indent-switch-case ()
