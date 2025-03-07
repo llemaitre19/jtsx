@@ -238,11 +238,16 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
   (when-let ((node (jtsx-treesit-node-at position)))
     (jtsx-enclosing-jsx-node node jtsx-jsx-ts-keys nil t jsx-exp-guard)))
 
+(defun jtsx-jsx-context-at-or-between-p (pos1 &optional pos2 jsx-exp-guard)
+  "Check if in JSX context at POS1 and optionaly at POS2.
+If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
+  (and (jtsx-jsx-context-at-p pos1 jsx-exp-guard)
+       (or (not pos2) (jtsx-jsx-context-at-p pos2 jsx-exp-guard))))
+
 (defun jtsx-jsx-context-p (&optional jsx-exp-guard)
   "Check if in JSX context at point or at region ends.
 If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
-  (and (jtsx-jsx-context-at-p (point) jsx-exp-guard)
-       (or (not (region-active-p)) (jtsx-jsx-context-at-p (mark) jsx-exp-guard))))
+  (jtsx-jsx-context-at-or-between-p (point) (mark) jsx-exp-guard))
 
 (defun jtsx-jsx-attribute-context-at-p (position)
   "Check if inside a JSX element attribute at POSITION."
@@ -250,17 +255,21 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
     (when (jtsx-enclosing-jsx-node node '("jsx_attribute") nil nil t)
       t)))
 
-(defun jtsx-jsx-attribute-context-p ()
-  "Check if in JSX element attribute context at point or at region ends."
-  (let ((jsx-attr-at-point (jtsx-jsx-attribute-context-at-p (point))))
-    (if (not (region-active-p))
-        jsx-attr-at-point
-      (let ((jsx-attr-at-mark (jtsx-jsx-attribute-context-at-p (mark))))
-        (cond ((and jsx-attr-at-point jsx-attr-at-mark) t)
-              ((and (not jsx-attr-at-point) (not jsx-attr-at-mark)) nil)
-              ;; Point and mark contexts mismatch : attribute context takes precedence as it should
+(defun jtsx-jsx-attribute-context-at-or-between-p (pos1 &optional pos2)
+  "Check if in JSX element attribute context at POS1 and optionaly at POS2."
+  (let ((jsx-attr-at-pos1 (jtsx-jsx-attribute-context-at-p pos1)))
+    (if (not pos2)
+        jsx-attr-at-pos1
+      (let ((jsx-attr-at-pos2 (jtsx-jsx-attribute-context-at-p pos2)))
+        (cond ((and jsx-attr-at-pos1 jsx-attr-at-pos2) t)
+              ((and (not jsx-attr-at-pos1) (not jsx-attr-at-pos2)) nil)
+              ;; pos1 and pos2 contexts mismatch : attribute context takes precedence as it should
               ;; rather be the expected behaviour and the comment syntax is javascript compatible.
               (t t))))))
+
+(defun jtsx-jsx-attribute-context-p ()
+  "Check if in JSX element attribute context at point or at region ends."
+  (jtsx-jsx-attribute-context-at-or-between-p (point) (mark)))
 
 (defun jtsx-js-nested-in-jsx-context-at-p (position)
   "Check if inside JS nested in JSX context at POSITION.
@@ -270,74 +279,139 @@ The logic is quite basic : if `jtsx-jsx-context-at-p' returns t without
 inside JS nested in JSX context else not."
   (when (and (not (jtsx-jsx-context-at-p position t)) (jtsx-jsx-context-at-p position)) t))
 
-(defun jtsx-js-nested-in-jsx-context-p ()
-  "Check if inside JS nested in JSX context at point or at region ends.
+(defun jtsx-js-nested-in-jsx-context-at-or-between-p (pos1 &optional pos2)
+  "Check if inside JS nested in JSX context at POS1 or at POS2.
 
-If region is active, we assume that having one of the regions ends in nested JS
+If POS2 is not nill, we assume that having POS1 or POS2 in nested JS
 in JSX context means we are in nested JS in JSX context.  It enables to cover
 that kind of case:
 <A>{[1, 2, 3].map((val)=>{ return <B attr={val} />})}</A>."
-  (or (jtsx-js-nested-in-jsx-context-at-p (point))
-       (and (region-active-p) (jtsx-js-nested-in-jsx-context-at-p (mark)))))
+  (or (jtsx-js-nested-in-jsx-context-at-p pos1)
+       (and pos2 (jtsx-js-nested-in-jsx-context-at-p pos2))))
+
+(defun jtsx-js-nested-in-jsx-context-p ()
+  "Check if inside JS nested in JSX context at point or at region ends."
+  (jtsx-js-nested-in-jsx-context-at-or-between-p (point) (mark)))
+
+(defmacro jtsx-with-jsx-comment-style (&rest body)
+  "Execute BODY with jsx attribute comment style."
+  (declare (debug t) (indent 0))
+  `(let ((comment-start "{/* ")
+         (comment-end " */}")
+         (comment-use-syntax nil)
+         (comment-start-skip "\\(?:{?/\\*+\\)\\s-*")
+         (comment-end-skip "\\s-*\\(\\*+/}?\\)"))
+     ,@body))
+
+(defmacro jtsx-with-jsx-attribute-comment-style (&rest body)
+  "Execute BODY with jsx attribute comment style."
+  (declare (debug t) (indent 0))
+  `(let ((comment-start "/* ")
+         (comment-end " */")
+         (comment-use-syntax nil)
+         (comment-start-skip "\\(?:/\\*+\\)\\s-*")
+         (comment-end-skip "\\s-*\\(\\*+/\\)"))
+     ,@body))
+
+(defmacro jtsx-with-js-nested-in-jsx-comment-style (&rest body)
+  "Execute BODY with jsx attribute comment style."
+  (declare (debug t) (indent 0))
+  `(let ((comment-use-syntax nil)
+        (comment-start-skip "\\(?://+\\|{?/\\*+\\)\\s-*")
+        (comment-end-skip "\\s-*\\(\\s>\\|\\*+/}?\\)"))
+     ,@body))
 
 (defun jtsx-comment-jsx-dwim (arg)
   "Comment or uncomment JSX at point or in region.
 See `comment-dwim' documentation for ARG usage."
-  (let ((comment-start "{/* ")
-        (comment-end " */}")
-        (comment-use-syntax nil)
-        (comment-start-skip "\\(?:{?/\\*+\\)\\s-*")
-        (comment-end-skip "\\s-*\\(\\*+/}?\\)"))
-    (comment-dwim arg)))
+  (jtsx-with-jsx-comment-style
+   (comment-dwim arg)))
 
 (defun jtsx-comment-jsx-attribute-dwim (arg)
   "Comment or uncomment JSX element attribute at point or in region.
 See `comment-dwim' documentation for ARG usage."
-  (let ((comment-start "/* ")
-        (comment-end " */")
-        (comment-use-syntax nil)
-        (comment-start-skip "\\(?:/\\*+\\)\\s-*")
-        (comment-end-skip "\\s-*\\(\\*+/\\)"))
-    (comment-dwim arg)))
+  (jtsx-with-jsx-attribute-comment-style
+   (comment-dwim arg)))
 
 (defun jtsx-comment-js-nested-in-jsx-dwim (arg)
   "Comment or uncomment JSX at point or in region.
 See `comment-dwim' documentation for ARG usage."
-  (let ((comment-use-syntax nil)
-        (comment-start-skip "\\(?://+\\|{?/\\*+\\)\\s-*")
-        (comment-end-skip "\\s-*\\(\\s>\\|\\*+/}?\\)"))
-    (comment-dwim arg)))
+  (jtsx-with-js-nested-in-jsx-comment-style
+   (comment-dwim arg)))
+
+(defun jtsx-comment-context-type (pos1 &optional pos2)
+  "Determine comment context type at POS1 or between POS1 and POS2.
+Return either `'jsx', `'jsx-attribute', `'js-nested-in-jsx', or `'default'."
+  (if pos2
+      (cond
+       ;; Inside JSX attribute context ?
+       ((jtsx-jsx-attribute-context-at-or-between-p pos1 pos2)
+        'jsx-attribute)
+       ;; Inside JS nested in JSX context ?
+       ((jtsx-js-nested-in-jsx-context-at-or-between-p pos1 pos2)
+        'js-nested-in-jsx)
+       ;; Inside JSX context ?
+       ((jtsx-jsx-context-at-or-between-p pos1 pos2 t) ; Do not traverse jsx expressions
+        'jsx)
+       ;; General case
+       (t 'default))
+    (cond
+     ;; Inside JSX attribute context ?
+     ((jtsx-jsx-attribute-context-at-p pos1)
+      'jsx-attribute)
+     ;; Inside JSX context ?
+     ((jtsx-jsx-context-at-p pos1 t) ; Do not traverse jsx expressions
+      'jsx)
+     ;; Inside JS nested in JSX context ?
+     ((jtsx-js-nested-in-jsx-context-at-p pos1)
+      'js-nested-in-jsx)
+     ;; General case
+     (t 'default))))
 
 (defun jtsx-comment-dwim (arg)
   "Add support for commenting/uncommenting inside JSX.
 See `comment-dwim' documentation for ARG usage."
   (interactive "*P")
-  (if (region-active-p)
-      (cond
-       ;; Inside JSX attribute context ?
-       ((jtsx-jsx-attribute-context-p)
-        (jtsx-comment-jsx-attribute-dwim arg))
-       ;; Inside JS nested in JSX context ?
-       ((jtsx-js-nested-in-jsx-context-p)
-        (jtsx-comment-js-nested-in-jsx-dwim arg))
-       ;; Inside JSX context ?
-       ((jtsx-jsx-context-p) ; Do not traverse jsx expressions
-        (jtsx-comment-jsx-dwim arg))
-       ;; General case
-       (t (comment-dwim arg)))
-    (let ((position (line-end-position)))
-      (cond
-       ;; Inside JSX attribute context ?
-       ((jtsx-jsx-attribute-context-at-p position)
-        (jtsx-comment-jsx-attribute-dwim arg))
-       ;; Inside JSX context ?
-       ((jtsx-jsx-context-at-p position t) ; Do not traverse jsx expressions
-        (jtsx-comment-jsx-dwim arg))
-       ;; Inside JS nested in JSX context ?
-       ((jtsx-js-nested-in-jsx-context-at-p position)
-        (jtsx-comment-js-nested-in-jsx-dwim arg))
-       ;; General case
-       (t (comment-dwim arg))))))
+  (let* ((pos1 (if (region-active-p) (point) (line-end-position)))
+         (pos2 (if (region-active-p) (mark) nil))
+         (comment-context (jtsx-comment-context-type pos1 pos2)))
+    (pcase comment-context
+      ('jsx-attribute (jtsx-comment-jsx-attribute-dwim arg))
+      ('js-nested-in-jsx (jtsx-comment-js-nested-in-jsx-dwim arg))
+      ('jsx (jtsx-comment-jsx-dwim arg))
+      (_ (comment-dwim arg)))))
+
+(defun jtsx-comment-jsx-line (n)
+  "Comment or uncomment the whole JSX line at point.
+See `comment-line' documentation for N usage."
+  (jtsx-with-jsx-comment-style
+    (comment-line n)))
+
+(defun jtsx-comment-jsx-attribute-line (n)
+  "Comment or uncomment the whole JSX attribute line at point.
+See `comment-line' documentation for N usage."
+  (jtsx-with-jsx-attribute-comment-style
+   (comment-line n)))
+
+(defun jtsx-comment-js-nested-in-jsx-line (n)
+  "Comment or uncomment the whole JS nested in JSX line at point.
+See `comment-line' documentation for N usage."
+  (jtsx-with-js-nested-in-jsx-comment-style
+    (comment-line n)))
+
+(defun jtsx-comment-line (n)
+  "Add support for commenting/uncommenting a line inside JSX.
+See `comment-line' documentation for N usage."
+  (interactive "P")
+  ;; comment-line always comment the whole lines
+  (let* ((pos1 (line-beginning-position))
+         (pos2 (line-end-position n))
+         (comment-context (jtsx-comment-context-type pos1 pos2)))
+      (pcase comment-context
+       ('jsx-attribute (jtsx-comment-jsx-attribute-line n))
+       ('js-nested-in-jsx (jtsx-comment-js-nested-in-jsx-line n))
+       ('jsx (jtsx-comment-jsx-line n))
+       (_ (comment-line n)))))
 
 (defun jtsx-jump-jsx-opening-tag ()
   "Jump to the opening tag of the JSX element."
