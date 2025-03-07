@@ -733,7 +733,7 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
     (should (equal (comment-line-into-buffer content set-point #'jtsx-jsx-mode) result))
     (should (equal (comment-line-into-buffer content set-point #'jtsx-tsx-mode) result))))
 
-(ert-deftest jtsx-test-uncomment-jsx-nested-js-in-attribute-region ()
+(ert-deftest jtsx-test-uncomment-jsx-nested-js-in-attribute-line ()
   (let ((set-point #'(lambda () (goto-char 20)))
         (result "(\n  <A attr={{\n    // a:1\n  }}\n  >\n  </A>\n);")
         (content "(\n  <A attr={{\n    a:1\n  }}\n  >\n  </A>\n);"))
