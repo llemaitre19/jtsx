@@ -16,7 +16,7 @@ Summary of features:
 * Refactoring: moving, wrapping/unwrapping, deleting, renaming `JSX` elements, toggling the orientation of`JSX` attributes
 * Jumping between `JSX` opening and closing tags
 * Electric `JSX` closing tag and new line
-* Code folding
+* Code folding _[Emacs 31 build-in]_
 * Some additional indentation options
 
 Note that while `jtsx-jsx-mode` is fully compatible with pure `JS` files, `jtsx-tsx-mode` has some rare conflicts with `TS` files (e.g. type assertions). It is thus recommanded to use `jtsx-typescript-mode` (based on `typescript-ts-mode`) for plain `TS` files.
@@ -197,6 +197,8 @@ These functionalities can be desactivated by setting `jtsx-enable-jsx-electric-c
 `Hideshow` can be enabled with `M-x hs-minor-mode` command.
 
 Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manual/html_node/emacs/Hideshow.html) for usage informations.
+
+Note that starting Emacs 31, JSX code folding works out of the box with `js-ts-mode` and `tsx-mode`.
 
 ![Fold element](./examples/fold-element.gif)
 
