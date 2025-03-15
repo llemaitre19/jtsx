@@ -198,7 +198,7 @@ These functionalities can be desactivated by setting `jtsx-enable-jsx-electric-c
 
 Please refer to [Hideshow documentation](https://www.gnu.org/software/emacs/manual/html_node/emacs/Hideshow.html) for usage informations.
 
-Note that starting Emacs 31, JSX code folding works out of the box with `js-ts-mode` and `tsx-mode`.
+Note that starting Emacs 31, JSX code folding works out of the box in `js-ts-mode` and `tsx-ts-mode`.
 
 ![Fold element](./examples/fold-element.gif)
 
