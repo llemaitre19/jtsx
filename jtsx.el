@@ -1241,8 +1241,11 @@ NO-SYNTAX-CROSSING, Please see `backward-up-list'."
 
 (defun jtsx-hs-looking-at-block-start-p ()
   "Return non-nil if the point is at the block start."
-  (and (looking-at hs-block-start-regexp)
-       (not (equal (treesit-node-type (treesit-node-at (point))) "comment"))))
+  (if (>= 31 emacs-major-version)
+      ;; Use default function set by treesit
+      (funcall hs-looking-at-block-start-p-func)
+    (and (looking-at hs-block-start-regexp)
+         (not (equal (treesit-node-type (treesit-node-at (point))) "comment")))))
 
 (defun jtsx-hs-find-block-beginning ()
   "Enhance `hs-find-block-beginning' for JSX."
