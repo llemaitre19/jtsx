@@ -1138,11 +1138,11 @@ of the new expected orientation is performed."
 (defun jtsx-forward-sexp-base (&optional arg interactive)
   "ARG INTERACTIVE."
   (if (or
-       ;; Starting Emacs 30, treesit set its own function, which has
+       ;; In Emacs 30.0, treesit set its own function, which has
        ;; some issues. Bug report:
        ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=66988 Use the
        ;; default one instead.
-       (>= 30 emacs-major-version)
+       (and (version<= "30.0" emacs-version) (version< emacs-version "30.1"))
        ;; Prevent recursive call
        (eq forward-sexp-function #'jtsx-forward-sexp))
       (let ((forward-sexp-function nil))
@@ -1241,7 +1241,7 @@ NO-SYNTAX-CROSSING, Please see `backward-up-list'."
 
 (defun jtsx-hs-looking-at-block-start-p ()
   "Return non-nil if the point is at the block start."
-  (if (>= 31 emacs-major-version)
+  (if (>= emacs-major-version 31)
       ;; Use default function set by treesit
       (funcall hs-looking-at-block-start-p-func)
     (and (looking-at hs-block-start-regexp)
