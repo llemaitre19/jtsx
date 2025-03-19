@@ -16,7 +16,7 @@ Summary of features:
 * Refactoring: moving, wrapping/unwrapping, deleting, renaming `JSX` elements, toggling the orientation of`JSX` attributes
 * Jumping between `JSX` opening and closing tags
 * Electric `JSX` closing tag and new line
-* Code folding _[Emacs 31 build-in]_
+* Code folding _[Emacs 31 built-in]_
 * Some additional indentation options
 
 Note that while `jtsx-jsx-mode` is fully compatible with pure `JS` files, `jtsx-tsx-mode` has some rare conflicts with `TS` files (e.g. type assertions). It is thus recommanded to use `jtsx-typescript-mode` (based on `typescript-ts-mode`) for plain `TS` files.
