@@ -25,7 +25,7 @@ compile:
 
 test:
 	@echo "Testing..."
-	$(EASK) install-deps --dev
+	# $(EASK) install-deps --dev
 	$(EASK) test ert ./tests/*.el
 
 checkdoc:
