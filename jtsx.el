@@ -187,7 +187,7 @@ If ARG >= O go forward, else backward."
 Treesit looks at the node after the position (excepted when at the end of the
 line), it fine in most situations, excepted when at the end of a region where
 getting the treesit node before position is more suitable."
-  (let ((effective-pos (if (and (region-active-p) (eq pos (region-end))) (1- pos) pos)))
+  (let ((effective-pos (if (and (use-region-p) (eq pos (region-end))) (1- pos) pos)))
     (treesit-node-at effective-pos)))
 
 (defun jtsx-traversing-jsx-expression-p (node initial-node)
@@ -247,7 +247,7 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
 (defun jtsx-jsx-context-p (&optional jsx-exp-guard)
   "Check if in JSX context at point or at region ends.
 If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
-  (jtsx-jsx-context-at-or-between-p (point) (mark) jsx-exp-guard))
+  (jtsx-jsx-context-at-or-between-p (point) (when (use-region-p) (mark)) jsx-exp-guard))
 
 (defun jtsx-jsx-attribute-context-at-p (position)
   "Check if inside a JSX element attribute at POSITION."
@@ -269,7 +269,7 @@ If JSX-EXP-GUARD is not nil, do not traverse jsx expression."
 
 (defun jtsx-jsx-attribute-context-p ()
   "Check if in JSX element attribute context at point or at region ends."
-  (jtsx-jsx-attribute-context-at-or-between-p (point) (mark)))
+  (jtsx-jsx-attribute-context-at-or-between-p (point) (when (use-region-p) (mark))))
 
 (defun jtsx-js-nested-in-jsx-context-at-p (position)
   "Check if inside JS nested in JSX context at POSITION.
@@ -291,7 +291,7 @@ that kind of case:
 
 (defun jtsx-js-nested-in-jsx-context-p ()
   "Check if inside JS nested in JSX context at point or at region ends."
-  (jtsx-js-nested-in-jsx-context-at-or-between-p (point) (mark)))
+  (jtsx-js-nested-in-jsx-context-at-or-between-p (point) (when (use-region-p) (mark))))
 
 (defmacro jtsx-with-jsx-comment-style (&rest body)
   "Execute BODY with jsx attribute comment style."
@@ -372,8 +372,8 @@ Return either `'jsx', `'jsx-attribute', `'js-nested-in-jsx', or `'default'."
   "Add support for commenting/uncommenting inside JSX.
 See `comment-dwim' documentation for ARG usage."
   (interactive "*P")
-  (let* ((pos1 (if (region-active-p) (point) (line-end-position)))
-         (pos2 (if (region-active-p) (mark) nil))
+  (let* ((pos1 (if (use-region-p) (point) (line-end-position)))
+         (pos2 (if (use-region-p) (mark) nil))
          (comment-context (jtsx-comment-context-type pos1 pos2)))
     (pcase comment-context
       ('jsx-attribute (jtsx-comment-jsx-attribute-dwim arg))
@@ -867,8 +867,8 @@ Member of `post-self-insert-hook'."
 (defun jtsx-trimmed-region ()
   "Return the trimmed region as a plist.
 Keys are `:start' and `:end'."
-  (let* ((start-pos (min (point) (mark)))
-         (end-pos (max (point) (mark)))
+  (let* ((start-pos (min (point) (when (use-region-p) (mark))))
+         (end-pos (max (point) (when (use-region-p) (mark))))
          (trimmed-start-pos (save-excursion
                               (goto-char start-pos)
                               (jtsx-goto-content-forward)
@@ -885,12 +885,12 @@ Keys are `:start' and `:end'."
 (defun jtsx-region-to-wrap ()
   "Return the expected region to be wrapped as a plist.
 Keys are `:start' and `:end'."
-  (let* ((region (if (region-active-p) (jtsx-trimmed-region) `(:start ,(point) :end ,(point))))
+  (let* ((region (if (use-region-p) (jtsx-trimmed-region) `(:start ,(point) :end ,(point))))
          (start-pos (plist-get region :start))
          (end-pos (plist-get region :end))
          (start-element (jtsx-enclosing-jsx-node (jtsx-treesit-node-at start-pos)
                                                  jtsx-jsx-ts-root-keys nil t))
-         (end-element (if (region-active-p)
+         (end-element (if (use-region-p)
                           (jtsx-enclosing-jsx-node (jtsx-treesit-node-at end-pos)
                                                    jtsx-jsx-ts-root-keys nil t)
                         start-element))
@@ -898,7 +898,7 @@ Keys are `:start' and `:end'."
          (end-element-type (treesit-node-type end-element)))
     (cl-assert (and start-element end-element))
     (if (and
-         (region-active-p)
+         (use-region-p)
          (equal start-element-type "jsx_text")
          (equal end-element-type "jsx_text"))
         ;; Handle specific case: selection inside a text node (eg to wrap a text with `strong'

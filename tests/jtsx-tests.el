@@ -255,6 +255,16 @@ Turn this buffer in MODE mode if supplied or defaults to jtsx-tsx-mode."
                                            #'jtsx-tsx-mode)
                    nil))))
 
+(ert-deftest jtsx-test-in-jsx-context-with-inactive-mark ()
+  (let ((move-point (lambda () (goto-char 3) (push-mark 0) (deactivate-mark t)))
+        (content "(<A></A>);"))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-jsx-mode)
+                   t))
+    (should (equal (do-command-into-buffer content move-point nil #'jtsx-jsx-context-p
+                                           #'jtsx-tsx-mode)
+                   t))))
+
 (ert-deftest jtsx-test-in-jsx-context-from-opening-tag ()
   (let ((move-point (lambda () (goto-char 3)))
         (content "(<A></A>);"))

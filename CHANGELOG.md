@@ -4,6 +4,7 @@
 
 ## Master
 
+* Fix issue regarding active region detection.
 * Fixes regarding some Emacs 31 breaking changes
 
 ## 0.7.0 (2025-10-18)
