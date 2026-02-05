@@ -12,7 +12,7 @@ emacs_versions=("emacs-29-1" "emacs-29-2" "emacs-29-3" "emacs-29-4" "emacs-30-1"
 for version in ${emacs_versions[@]}; do
     printf "###### RUN TESTS ON '%s'. ######\n" $version
     emacs_nix="github:purcell/nix-emacs-ci#$version"
-    if ! nix shell $emacs_nix nixpkgs#eask --command make -C ../ ci; then
+    if ! nix shell $emacs_nix nixpkgs#eask-cli --command make -C ../ ci; then
        printf "###### TESTS FAILURE ON '%s'. ######\n" $version
        exit
     fi

@@ -1587,7 +1587,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
 (ert-deftest jtsx-test-no-electric-newline-into-none-empty-inline-element ()
   ;; Known bug in the grammars, see
   ;; https://github.com/tree-sitter/tree-sitter-javascript/issues/339
-  :expected-result :failed
+  :expected-result (if (version< emacs-version "31") :failed :passed)
   (let ((jtsx-enable-electric-open-newline-between-jsx-element-tags t)
         (move-point #'(lambda () (goto-char 8)))
         (content "(\n  <A>TEXT</A>\n);")
@@ -1686,7 +1686,7 @@ In that situation, Tree-sitter parser is very confused with this syntax.  No wor
 (ert-deftest jtsx-test-wrap-text-at-region ()
   ;; Known bug in the grammars, see
   ;; https://github.com/tree-sitter/tree-sitter-javascript/issues/339
-  :expected-result :failed
+  :expected-result (if (version< emacs-version "31") :failed :passed)
   (let ((set-region #'(lambda () (find-and-set-region "HELLO")))
         (content "(\n  <>\n    HELLO\n  </>\n);")
         (result "(\n  <>\n    <W>\n      HELLO\n    </W>\n  </>\n);"))
